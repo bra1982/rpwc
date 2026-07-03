@@ -1,0 +1,8917 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ranking Dinâmico da Copa do Mundo FIFA</title>
+  <style>
+    :root{
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --card2:#f8fafc;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e6ebf2;
+      --blue:#1d4ed8;
+      --green:#16a34a;
+      --red:#dc2626;
+      --gold:#b08d57;
+      --shadow:0 18px 60px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(29,78,216,.06), transparent 28%),
+        radial-gradient(circle at top right, rgba(176,141,87,.08), transparent 25%),
+        var(--bg);
+      color:var(--text);
+      overflow:hidden;
+    }
+    .app{
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      padding:16px;
+      gap:12px;
+    }
+	.header{
+	  display:flex;
+	  justify-content:center;
+	  align-items:center;
+	  background:var(--card);
+	  border:1px solid var(--line);
+	  border-radius:var(--radius);
+	  box-shadow:var(--shadow);
+	  padding:14px 18px;
+	}
+	.header-main{
+	  width:100%;
+	  display:flex;
+	  align-items:center;
+	  justify-content:space-between;
+	  gap:16px;
+	  flex-wrap:wrap;
+	  min-width:0;
+	}
+	.year{
+	  font-size:26px;
+	  font-weight:900;
+	  letter-spacing:-.04em;
+	  text-align:center;
+	  color:var(--text);
+	  display:flex;
+	  gap:10px;
+	  align-items:center;
+	  justify-content:center;
+	  flex:1 1 320px;
+	  min-width:0;
+	  flex-wrap:wrap;
+	}
+	.flag{
+      width:28px;
+      height:auto;
+      border-radius:3px;
+      box-shadow:0 0 0 1px rgba(0,0,0,.08);
+      vertical-align:middle;
+    }
+    .controls{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:12px 14px;
+      flex-wrap:wrap;
+    }
+    .controls input[type="range"]{
+      flex:1;
+      min-width:240px;
+      accent-color:var(--blue);
+    }
+    .controls button{
+      border:none;
+      cursor:pointer;
+      background:linear-gradient(135deg, #e8f0ff, #f5efe3);
+      color:var(--text);
+      padding:10px 14px;
+      font-weight:800;
+      border-radius:12px;
+      border:1px solid var(--line);
+    }
+    .table-wrap{
+      flex:1;
+      min-height:0;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .table-head{
+      display:grid;
+      grid-template-columns:60px 1.55fr 1fr 72px 72px 86px;
+      gap:10px;
+      padding:10px 16px;
+      background:var(--card2);
+      color:#334155;
+      font-size:12px;
+      font-weight:800;
+      border-bottom:1px solid var(--line);
+    }
+    .rows{overflow:auto;flex:1}
+    .row{
+      display:grid;
+      grid-template-columns:60px 1.55fr 1fr 72px 72px 86px;
+      gap:10px;
+      padding:8px 10px;
+      border-bottom:1px solid var(--line);
+      align-items:center;
+      font-size:16px;
+      line-height:1.12;
+      transition:transform .55s cubic-bezier(.2,.9,.2,1), background .25s ease, opacity .55s ease, box-shadow .55s ease, filter .55s ease;
+      will-change:transform;
+    }
+    .row:hover{background:#fafcff}
+    .row.moving-up{box-shadow:0 10px 22px rgba(22,163,74,.16);filter: drop-shadow(0 6px 10px rgba(22,163,74,.14))}
+    .row.moving-down{box-shadow:0 10px 22px rgba(220,38,38,.16);filter: drop-shadow(0 6px 10px rgba(220,38,38,.14))}
+    .pos{font-weight:900;color:var(--gold);font-size:15px}
+    .name{font-weight:500}
+    .country,.games,.change{color:var(--muted)}
+    .up{color:var(--green);font-weight:800}
+    .down{color:var(--red);font-weight:800}
+    .same{color:#64748b;font-weight:800}
+    .new{color:var(--blue);font-weight:800}
+    @media (max-width: 920px){
+      .table-head,.row{grid-template-columns:52px 1.45fr 1fr 64px 64px 78px}
+    }
+    @media (max-width: 720px){
+      .games{display:none}
+      .table-head,.row{grid-template-columns:52px 1.55fr 1fr 64px 78px}
+    }
+
+    .podium {
+      display: flex;
+      gap: 12px;
+      margin-left: 20px;
+      padding-left: 20px;
+      border-left: 2px solid var(--line);
+      align-items: center;
+    }
+    .podium-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      background: var(--card2);
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    .podium-flag {
+      width: 22px;
+      height: auto;
+      border-radius: 2px;
+    }
+    .podium-initials {
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+    .medal {
+      position: absolute;
+      top: -10px;
+      font-size: 12px;
+    }
+	
+	.legend{
+	  position:static;
+	  display:flex;
+	  flex-direction:column;
+	  gap:4px;
+	  font-size:10px;
+	  color:var(--muted);
+	  line-height:1.2;
+	  text-align:left;
+	  border-left:1px solid var(--line);
+	  padding-left:15px;
+	  flex:0 0 auto;
+	  max-width:100%;
+	}
+
+	.legend-item{
+	  display:flex;
+	  align-items:center;
+	  gap:5px;
+	  white-space:nowrap;
+	}
+
+	.legend-icon{
+	  font-weight:900;
+	  width:12px;
+	  display:inline-block;
+	}
+
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+	  <div class="year" id="yearTitle">1930 - Copa do Mundo (Uruguai)</div>	
+	  <div class="legend">
+        <div class="legend-item"><span class="legend-icon" style="color:var(--green)">▲</span> Subiu no ranking</div>
+        <div class="legend-item"><span class="legend-icon" style="color:var(--red)">▼</span> Desceu no ranking</div>
+        <div class="legend-item"><span class="legend-icon" style="color:var(--blue)">✨</span> Estreia no ranking</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div style="font-weight:800;color:#334155" id="yearLabel">1930</div>
+      <input type="range" id="yearSlider" min="0" max="0" value="0" />
+      <button id="playBtn">▶ Play</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <div>Pos.</div>
+        <div>Jogador</div>
+        <div>País</div>
+        <div>Gols</div>
+        <div>Jogos</div>
+        <div>Variação</div>
+      </div>
+      <div class="rows" id="rows"></div>
+    </div>
+  </div>
+
+  <script>
+    const flagUrlMap = {
+      "Argentina":"https://flagcdn.com/w40/ar.png",
+      "Uruguay":"https://flagcdn.com/w40/uy.png",
+      "Uruguai":"https://flagcdn.com/w40/uy.png",
+      "United States":"https://flagcdn.com/w40/us.png",
+      "Estados Unidos":"https://flagcdn.com/w40/us.png",
+      "Brazil":"https://flagcdn.com/w40/br.png",
+      "Brasil":"https://flagcdn.com/w40/br.png",
+      "Yugoslavia":"https://flagcdn.com/w40/rs.png",
+      "Iugoslávia":"https://flagcdn.com/w40/rs.png",
+      "Chile":"https://flagcdn.com/w40/cl.png",
+      "France":"https://flagcdn.com/w40/fr.png",
+      "França":"https://flagcdn.com/w40/fr.png",
+      "Mexico":"https://flagcdn.com/w40/mx.png",
+      "México":"https://flagcdn.com/w40/mx.png",
+      "Paraguay":"https://flagcdn.com/w40/py.png",
+      "Paraguai":"https://flagcdn.com/w40/py.png",
+      "Peru":"https://flagcdn.com/w40/pe.png",
+      "Romania":"https://flagcdn.com/w40/ro.png",
+      "Romênia":"https://flagcdn.com/w40/ro.png",
+      "Czechoslovakia":"https://flagcdn.com/w40/cz.png",
+      "Tchecoslováquia":"https://flagcdn.com/w40/cz.png",
+      "Germany":"https://flagcdn.com/w40/de.png",
+      "Alemanha":"https://flagcdn.com/w40/de.png",
+      "Italy":"https://flagcdn.com/w40/it.png",
+      "Itália":"https://flagcdn.com/w40/it.png",
+      "Austria":"https://flagcdn.com/w40/at.png",
+      "Áustria":"https://flagcdn.com/w40/at.png",
+      "Spain":"https://flagcdn.com/w40/es.png",
+      "Espanha":"https://flagcdn.com/w40/es.png",
+      "Switzerland":"https://flagcdn.com/w40/ch.png",
+      "Suíça":"https://flagcdn.com/w40/ch.png",
+      "Netherlands":"https://flagcdn.com/w40/nl.png",
+      "Holanda":"https://flagcdn.com/w40/nl.png",
+      "Países Baixos":"https://flagcdn.com/w40/nl.png",
+      "Hungary":"https://flagcdn.com/w40/hu.png",
+      "Hungria":"https://flagcdn.com/w40/hu.png",
+      "Sweden":"https://flagcdn.com/w40/se.png",
+      "Suécia":"https://flagcdn.com/w40/se.png",
+      "Cuba":"https://flagcdn.com/w40/cu.png",
+      "Poland":"https://flagcdn.com/w40/pl.png",
+      "Polônia":"https://flagcdn.com/w40/pl.png",
+      "Norway":"https://flagcdn.com/w40/no.png",
+      "Noruega":"https://flagcdn.com/w40/no.png",
+      "Northern Ireland":"https://flagcdn.com/w40/gb-nir.png",
+      "Irlanda do Norte":"https://flagcdn.com/w40/gb-nir.png",
+      "Wales":"https://flagcdn.com/w40/gb-wls.png",
+      "País de Gales":"https://flagcdn.com/w40/gb-wls.png",
+      "Soviet Union":"https://flagcdn.com/w40/ru.png",
+      "União Soviética":"https://flagcdn.com/w40/ru.png",
+      "England":"https://flagcdn.com/w40/gb-eng.png",
+      "Inglaterra":"https://flagcdn.com/w40/gb-eng.png",
+      "Portugal":"https://flagcdn.com/w40/pt.png",
+      "Bulgaria":"https://flagcdn.com/w40/bg.png",
+      "Bulgária":"https://flagcdn.com/w40/bg.png",
+      "North Korea":"https://flagcdn.com/w40/kp.png",
+      "Coreia do Norte":"https://flagcdn.com/w40/kp.png",
+      "Israel":"https://flagcdn.com/w40/il.png",
+      "Morocco":"https://flagcdn.com/w40/ma.png",
+      "Marrocos":"https://flagcdn.com/w40/ma.png",
+      "El Salvador":"https://flagcdn.com/w40/sv.png",
+      "Australia":"https://flagcdn.com/w40/au.png",
+      "Austrália":"https://flagcdn.com/w40/au.png",
+      "Zaire":"https://flagcdn.com/w40/cd.png",
+      "Haiti":"https://flagcdn.com/w40/ht.png",
+      "Tunisia":"https://flagcdn.com/w40/tn.png",
+      "Tunísia":"https://flagcdn.com/w40/tn.png",
+      "Iran":"https://flagcdn.com/w40/ir.png",
+      "Irã":"https://flagcdn.com/w40/ir.png",
+      "Scotland":"https://flagcdn.com/w40/gb-sct.png",
+      "Escócia":"https://flagcdn.com/w40/gb-sct.png",
+      "Algeria":"https://flagcdn.com/w40/dz.png",
+      "Argélia":"https://flagcdn.com/w40/dz.png",
+      "Honduras":"https://flagcdn.com/w40/hn.png",
+      "Kuwait":"https://flagcdn.com/w40/kw.png",
+      "Cameroon":"https://flagcdn.com/w40/cm.png",
+      "Camarões":"https://flagcdn.com/w40/cm.png",
+      "New Zealand":"https://flagcdn.com/w40/nz.png",
+      "Nova Zelândia":"https://flagcdn.com/w40/nz.png",
+      "Iraq":"https://flagcdn.com/w40/iq.png",
+      "Iraque":"https://flagcdn.com/w40/iq.png",
+      "Denmark":"https://flagcdn.com/w40/dk.png",
+      "Dinamarca":"https://flagcdn.com/w40/dk.png",
+      "South Korea":"https://flagcdn.com/w40/kr.png",
+      "Coreia do Sul":"https://flagcdn.com/w40/kr.png",
+      "Belgium":"https://flagcdn.com/w40/be.png",
+      "Bélgica":"https://flagcdn.com/w40/be.png",
+      "Colombia":"https://flagcdn.com/w40/co.png",
+      "Colômbia":"https://flagcdn.com/w40/co.png",
+      "Costa Rica":"https://flagcdn.com/w40/cr.png",
+      "Republic of Ireland":"https://flagcdn.com/w40/ie.png",
+      "Irlanda":"https://flagcdn.com/w40/ie.png",
+      "Egypt":"https://flagcdn.com/w40/eg.png",
+      "Egito":"https://flagcdn.com/w40/eg.png",
+      "United Arab Emirates":"https://flagcdn.com/w40/ae.png",
+      "Emirados Árabes":"https://flagcdn.com/w40/ae.png",
+      "Russia":"https://flagcdn.com/w40/ru.png",
+      "Rússia":"https://flagcdn.com/w40/ru.png",
+      "Saudi Arabia":"https://flagcdn.com/w40/sa.png",
+      "Arábia Saudita":"https://flagcdn.com/w40/sa.png",
+      "Greece":"https://flagcdn.com/w40/gr.png",
+      "Grécia":"https://flagcdn.com/w40/gr.png",
+      "Nigeria":"https://flagcdn.com/w40/ng.png",
+      "Nigéria":"https://flagcdn.com/w40/ng.png",
+      "Bolivia":"https://flagcdn.com/w40/bo.png",
+      "Bolívia":"https://flagcdn.com/w40/bo.png",
+      "South Africa":"https://flagcdn.com/w40/za.png",
+      "África do Sul":"https://flagcdn.com/w40/za.png",
+      "Japan":"https://flagcdn.com/w40/jp.png",
+      "Japão":"https://flagcdn.com/w40/jp.png",
+      "Jamaica":"https://flagcdn.com/w40/jm.png",
+      "Croatia":"https://flagcdn.com/w40/hr.png",
+      "Croácia":"https://flagcdn.com/w40/hr.png",
+      "FR Yugoslavia":"https://flagcdn.com/w40/rs.png",
+      "Senegal":"https://flagcdn.com/w40/sn.png",
+      "Slovenia":"https://flagcdn.com/w40/si.png",
+      "Eslovênia":"https://flagcdn.com/w40/si.png",
+      "Ecuador":"https://flagcdn.com/w40/ec.png",
+      "Equador":"https://flagcdn.com/w40/ec.png",
+      "China":"https://flagcdn.com/w40/cn.png",
+      "Turkey":"https://flagcdn.com/w40/tr.png",
+      "Turquia":"https://flagcdn.com/w40/tr.png",
+      "Czech Republic":"https://flagcdn.com/w40/cz.png",
+      "República Tcheca":"https://flagcdn.com/w40/cz.png",
+      "Ghana":"https://flagcdn.com/w40/gh.png",
+      "Gana":"https://flagcdn.com/w40/gh.png",
+      "Ivory Coast":"https://flagcdn.com/w40/ci.png",
+      "Costa do Marfim":"https://flagcdn.com/w40/ci.png",
+      "Angola":"https://flagcdn.com/w40/ao.png",
+      "Trinidad and Tobago":"https://flagcdn.com/w40/tt.png",
+      "Togo":"https://flagcdn.com/w40/tg.png",
+      "Ukraine":"https://flagcdn.com/w40/ua.png",
+      "Ucrânia":"https://flagcdn.com/w40/ua.png",
+      "Serbia and Montenegro":"https://flagcdn.com/w40/rs.png",
+      "Sérvia e Montenegro":"https://flagcdn.com/w40/rs.png",
+      "Slovakia":"https://flagcdn.com/w40/sk.png",
+      "Eslováquia":"https://flagcdn.com/w40/sk.png",
+      "Serbia":"https://flagcdn.com/w40/rs.png",
+      "Sérvia":"https://flagcdn.com/w40/rs.png",
+      "Bosnia and Herzegovina":"https://flagcdn.com/w40/ba.png",
+      "Bósnia":"https://flagcdn.com/w40/ba.png",
+      "Iceland":"https://flagcdn.com/w40/is.png",
+      "Islândia":"https://flagcdn.com/w40/is.png",
+      "Panama":"https://flagcdn.com/w40/pa.png",
+      "Panamá":"https://flagcdn.com/w40/pa.png",
+      "Qatar":"https://flagcdn.com/w40/qa.png",
+      "Catar":"https://flagcdn.com/w40/qa.png",
+      "Canada":"https://flagcdn.com/w40/ca.png",
+      "Canadá":"https://flagcdn.com/w40/ca.png",
+      "Alemanha Ocidental":"https://flagcdn.com/w40/de.png",
+      "West Germany":"https://flagcdn.com/w40/de.png",
+      "Alemanha Oriental":"https://flagcdn.com/w40/de.png"
+    };
+
+    function flagImg(country, size=20){
+      const src = flagUrlMap[country];
+      if(!src) return '';
+      return `<img src="${src}" alt="${country}" style="width:${size}px;height:auto;vertical-align:middle;margin-right:6px;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.08)">`;
+    }
+
+    const hostMap = {
+      1930:"Uruguai",1934:"Itália",1938:"França",1950:"Brasil",1954:"Suíça",1958:"Suécia",1962:"Chile",1966:"Inglaterra",
+      1970:"México",1974:"Alemanha Ocidental",1978:"Argentina",1982:"Espanha",1986:"México",1990:"Itália",1994:"Estados Unidos",
+      1998:"França",2002:"Coreia do Sul/Japão",2006:"Alemanha",2010:"África do Sul",2014:"Brasil",2018:"Rússia",2022:"Catar",2026:"Canadá, EUA e México"
+    };
+
+    const editions = [
+  {
+    "year": 1930,
+    "updates": [
+      {
+        "name": "Guillermo Stábile",
+        "country": "Argentina",
+        "goals": 8
+      },
+      {
+        "name": "Pedro Cea",
+        "country": "Uruguay",
+        "goals": 5
+      },
+      {
+        "name": "Bert Patenaude",
+        "country": "United States",
+        "goals": 4
+      },
+      {
+        "name": "Carlos Peucelle",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Preguinho",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Peregrino Anselmo",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Ivan Bek",
+        "country": "Yugoslavia",
+        "goals": 3
+      },
+      {
+        "name": "Adolfo Zumelzú",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Luis Monti",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Moderato",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Carlos Vidal",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Guillermo Subiabre",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "André Maschinot",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Manuel Rosas",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Héctor Castro",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Pablo Dorado",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Santos Iriarte",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Đorđe Vujadinović",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Alejandro Scopelli",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Francisco Varallo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Mario Evaristo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Lucien Laurent",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Marcel Langiller",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Juan Carreño",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Roberto Gayón",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Luis Vargas Peña",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Luis Souza Ferreira",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Adalbert Deşu",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Constantin Stanciu",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Miklós Kovács",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Bart McGhee",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Jim Brown",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Tom Florie",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Héctor Scarone",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandar Tirnanić",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Blagoje Marjanović",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1934,
+    "updates": [
+      {
+        "name": "Oldřich Nejedlý",
+        "country": "Czechoslovakia",
+        "goals": 5
+      },
+      {
+        "name": "Edmund Conen",
+        "country": "Germany",
+        "goals": 4
+      },
+      {
+        "name": "Angelo Schiavio",
+        "country": "Italy",
+        "goals": 4
+      },
+      {
+        "name": "Raimundo Orsi",
+        "country": "Italy",
+        "goals": 3
+      },
+      {
+        "name": "Leopold Kielholz",
+        "country": "Switzerland",
+        "goals": 3
+      },
+      {
+        "name": "Johann Horvath",
+        "country": "Austria",
+        "goals": 2
+      },
+      {
+        "name": "Bernard Voorhoof",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Antonín Puč",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Abdulrahman Fawzi",
+        "country": "Egypt",
+        "goals": 2
+      },
+      {
+        "name": "Ernst Lehner",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Karl Hohmann",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Géza Toldi",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Giovanni Ferrari",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Giuseppe Meazza",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "José Iraragorri",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Sven Jonasson",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Alberto Galateo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ernesto Belis",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Anton Schall",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Josef Bican",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Karl Sesta",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Karl Zischek",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Matthias Sindelar",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Leônidas",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "František Svoboda",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Jiří Sobotka",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Georges Verriest",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Jean Nicolas",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Otto Siffling",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Rudolf Noack",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Stanislaus Kobierski",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "György Sárosi",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Jenő Vincze",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Pál Teleki",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Enrique Guaita",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Kick Smit",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Leen Vente",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Ștefan Dobay",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Isidro Lángara",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Luis Regueiro",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Gösta Dunker",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Knut Kroon",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "André Abegglen",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Willy Jäggi",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Aldo Donelli",
+        "country": "United States",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1938,
+    "updates": [
+      {
+        "name": "Leônidas",
+        "country": "Brazil",
+        "goals": 7
+      },
+      {
+        "name": "Gyula Zsengellér",
+        "country": "Hungary",
+        "goals": 5
+      },
+      {
+        "name": "György Sárosi",
+        "country": "Hungary",
+        "goals": 5
+      },
+      {
+        "name": "Silvio Piola",
+        "country": "Italy",
+        "goals": 5
+      },
+      {
+        "name": "Gino Colaussi",
+        "country": "Italy",
+        "goals": 4
+      },
+      {
+        "name": "Ernst Wilimowski",
+        "country": "Poland",
+        "goals": 4
+      },
+      {
+        "name": "Perácio",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Romeu",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Héctor Socorro",
+        "country": "Cuba",
+        "goals": 3
+      },
+      {
+        "name": "Arne Nyberg",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "Gustav Wetterström",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "Harry Andersson",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "André Abegglen",
+        "country": "Switzerland",
+        "goals": 3
+      },
+      {
+        "name": "Oldřich Nejedlý",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Jean Nicolas",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Pál Titkos",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Ștefan Dobay",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Hendrik Isemborghs",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Roberto",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "José Magriñá",
+        "country": "Cuba",
+        "goals": 1
+      },
+      {
+        "name": "Tomás Fernández",
+        "country": "Cuba",
+        "goals": 1
+      },
+      {
+        "name": "Josef Košťálek",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Josef Zeman",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Vlastimil Kopecký",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Oscar Heisserer",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Émile Veinante",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Josef Gauchel",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Wilhelm Hahnemann",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Géza Toldi",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Vilmos Kohut",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Giuseppe Meazza",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Pietro Ferraris",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Arne Brustad",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "Fryderyk Scherfke",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Iuliu Baratky",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Silviu Bindea",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Sven Jonasson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Tore Keller",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Alfred Bickel",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Eugen Walaschek",
+        "country": "Switzerland",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1950,
+    "updates": [
+      {
+        "name": "Ademir",
+        "country": "Brazil",
+        "goals": 9
+      },
+      {
+        "name": "Oscar Míguez",
+        "country": "Uruguay",
+        "goals": 5
+      },
+      {
+        "name": "Chico",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Estanislau Basora",
+        "country": "Spain",
+        "goals": 4
+      },
+      {
+        "name": "Telmo Zarra",
+        "country": "Spain",
+        "goals": 4
+      },
+      {
+        "name": "Alcides Ghiggia",
+        "country": "Uruguay",
+        "goals": 4
+      },
+      {
+        "name": "Karl-Erik Palmér",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "Stig Sundqvist",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "Juan Alberto Schiaffino",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Baltazar",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Jair",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Zizinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Atilio Cremaschi",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Riccardo Carapellese",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Silvestre Igoa",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Hasse Jeppson",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Sune Andersson",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Jacques Fatton",
+        "country": "Switzerland",
+        "goals": 2
+      },
+      {
+        "name": "Kosta Tomašević",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Željko Čajkovski",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Alfredo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Friaça",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Maneca",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Andrés Prieto",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Fernando Riera",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "George Robledo",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Stan Mortensen",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Wilf Mannion",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Egisto Pandolfini",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Ermes Muccinelli",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Horacio Casarín",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Héctor Ortiz",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Atilio López",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "César López Fretes",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Bror Mellberg",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Charles Antenen",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "René Bader",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Frank Wallace",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Gino Pariani",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Joe Gaetjens",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Joe Maca",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Ernesto Vidal",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Julio Pérez",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Obdulio Varela",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Rajko Mitić",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Stjepan Bobek",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Tihomir Ognjanov",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1954,
+    "updates": [
+      {
+        "name": "Sándor Kocsis",
+        "country": "Hungary",
+        "goals": 11
+      },
+      {
+        "name": "Erich Probst",
+        "country": "Austria",
+        "goals": 6
+      },
+      {
+        "name": "Josef Hügi",
+        "country": "Switzerland",
+        "goals": 6
+      },
+      {
+        "name": "Max Morlock",
+        "country": "West Germany",
+        "goals": 6
+      },
+      {
+        "name": "Ferenc Puskás",
+        "country": "Hungary",
+        "goals": 4
+      },
+      {
+        "name": "Nándor Hidegkuti",
+        "country": "Hungary",
+        "goals": 4
+      },
+      {
+        "name": "Robert Ballaman",
+        "country": "Switzerland",
+        "goals": 4
+      },
+      {
+        "name": "Carlos Borges",
+        "country": "Uruguay",
+        "goals": 4
+      },
+      {
+        "name": "Hans Schäfer",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "Helmut Rahn",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "Ottmar Walter",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "Ernst Stojaspal",
+        "country": "Austria",
+        "goals": 3
+      },
+      {
+        "name": "Theodor Wagner",
+        "country": "Austria",
+        "goals": 3
+      },
+      {
+        "name": "Léopold Anoul",
+        "country": "Belgium",
+        "goals": 3
+      },
+      {
+        "name": "Nat Lofthouse",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "Zoltán Czibor",
+        "country": "Hungary",
+        "goals": 3
+      },
+      {
+        "name": "Burhan Sargun",
+        "country": "Turkey",
+        "goals": 3
+      },
+      {
+        "name": "Suat Mamat",
+        "country": "Turkey",
+        "goals": 3
+      },
+      {
+        "name": "Juan Hohberg",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Oscar Míguez",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Fritz Walter",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Alfred Körner",
+        "country": "Austria",
+        "goals": 2
+      },
+      {
+        "name": "Ernst Ocwirk",
+        "country": "Austria",
+        "goals": 2
+      },
+      {
+        "name": "Didi",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Julinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Pinga",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Ivor Broadis",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Mihály Lantos",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Péter Palotás",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Lefter Küçükandonyadis",
+        "country": "Turkey",
+        "goals": 2
+      },
+      {
+        "name": "Juan Alberto Schiaffino",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Julio Abbadie",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Henri Coppens",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Baltazar",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Djalma Santos",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Dennis Wilshaw",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jimmy Mullen",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Tom Finney",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jean Vincent",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Raymond Kopa",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "József Tóth",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Amleto Frignani",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Benito Lorenzi",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Carlo Galli",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Egisto Pandolfini",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Fulvio Nesti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Giampiero Boniperti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "José Luis Lamadrid",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Tomás Balcázar",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Jacques Fatton",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Erol Keskin",
+        "country": "Turkey",
+        "goals": 1
+      },
+      {
+        "name": "Mustafa Ertan",
+        "country": "Turkey",
+        "goals": 1
+      },
+      {
+        "name": "Javier Ambrois",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Obdulio Varela",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Alfred Pfaff",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Bernhard Klodt",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Richard Herrmann",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Branko Zebec",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Miloš Milutinović",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1958,
+    "updates": [
+      {
+        "name": "Just Fontaine",
+        "country": "France",
+        "goals": 13
+      },
+      {
+        "name": "Pelé",
+        "country": "Brazil",
+        "goals": 6
+      },
+      {
+        "name": "Helmut Rahn",
+        "country": "West Germany",
+        "goals": 6
+      },
+      {
+        "name": "Vavá",
+        "country": "Brazil",
+        "goals": 5
+      },
+      {
+        "name": "Peter McParland",
+        "country": "Northern Ireland",
+        "goals": 5
+      },
+      {
+        "name": "Zdeněk Zikán",
+        "country": "Czechoslovakia",
+        "goals": 4
+      },
+      {
+        "name": "Lajos Tichy",
+        "country": "Hungary",
+        "goals": 4
+      },
+      {
+        "name": "Agne Simonsson",
+        "country": "Sweden",
+        "goals": 4
+      },
+      {
+        "name": "Kurt Hamrin",
+        "country": "Sweden",
+        "goals": 4
+      },
+      {
+        "name": "Oreste Corbatta",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Raymond Kopa",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "Roger Piantoni",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "Hans Schäfer",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Todor Veselinović",
+        "country": "Yugoslavia",
+        "goals": 3
+      },
+      {
+        "name": "José Altafini",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Milan Dvořák",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Václav Hovorka",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Derek Kevan",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Maryan Wisnieski",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Florencio Amarilla",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Jorge Lino Romero",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "José Parodi",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Juan Bautista Agüero",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Anatoli Ilyin",
+        "country": "Soviet Union",
+        "goals": 2
+      },
+      {
+        "name": "Nils Liedholm",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Ivor Allchurch",
+        "country": "Wales",
+        "goals": 2
+      },
+      {
+        "name": "Uwe Seeler",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Aleksandar Petaković",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Ludovico Avio",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Norberto Menéndez",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Alfred Körner",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Karl Koller",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Didi",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Mário Zagallo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Nílton Santos",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Jiří Feureisl",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Johnny Haynes",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Tom Finney",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jean Vincent",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Yvon Douis",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "József Bencsics",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "József Bozsik",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Károly Sándor",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Jaime Belmonte",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Wilbur Cush",
+        "country": "Northern Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Cayetano Ré",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Bobby Collins",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Jackie Mudie",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Jimmy Murray",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Sammy Baird",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandr Ivanov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Nikita Simonyan",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Valentin Ivanov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Gunnar Gren",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Lennart Skoglund",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "John Charles",
+        "country": "Wales",
+        "goals": 1
+      },
+      {
+        "name": "Terry Medwin",
+        "country": "Wales",
+        "goals": 1
+      },
+      {
+        "name": "Hans Cieslarczyk",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Radivoje Ognjanović",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Zdravko Rajkov",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1962,
+    "updates": [
+      {
+        "name": "Garrincha",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Vavá",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Leonel Sánchez",
+        "country": "Chile",
+        "goals": 4
+      },
+      {
+        "name": "Flórián Albert",
+        "country": "Hungary",
+        "goals": 4
+      },
+      {
+        "name": "Valentin Ivanov",
+        "country": "Soviet Union",
+        "goals": 4
+      },
+      {
+        "name": "Dražan Jerković",
+        "country": "Yugoslavia",
+        "goals": 4
+      },
+      {
+        "name": "Amarildo",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Adolf Scherer",
+        "country": "Czechoslovakia",
+        "goals": 3
+      },
+      {
+        "name": "Lajos Tichy",
+        "country": "Hungary",
+        "goals": 3
+      },
+      {
+        "name": "Milan Galić",
+        "country": "Yugoslavia",
+        "goals": 3
+      },
+      {
+        "name": "Eladio Rojas",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Jaime Ramírez",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Jorge Toro",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Ron Flowers",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Giacomo Bulgarelli",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Igor Chislenko",
+        "country": "Soviet Union",
+        "goals": 2
+      },
+      {
+        "name": "Viktor Ponedelnik",
+        "country": "Soviet Union",
+        "goals": 2
+      },
+      {
+        "name": "José Sasía",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Uwe Seeler",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Héctor Facundo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "José Sanfilippo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Mário Zagallo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Pelé",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Zito",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Georgi Sokolov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Antonio Rada",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Francisco Zuluaga",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Germán Aceros",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Marcos Coll",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Marino Klinger",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Josef Kadraba",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Josef Masopust",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Jozef Štibrányi",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Václav Mašek",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Bobby Charlton",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Gerry Hitchens",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jimmy Greaves",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Ernő Solymosi",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Bruno Mora",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Alfredo del Águila",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Héctor Hernández",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Isidoro Díaz",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Aleksei Mamykin",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Adelardo",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Joaquín Peiró",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Heinz Schneiter",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Rolf Wüthrich",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Luis Cubilla",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Ángel Cabrera",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Albert Brülls",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Horst Szymaniak",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Josip Skoblar",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Petar Radaković",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Vojislav Melić",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1966,
+    "updates": [
+      {
+        "name": "Eusébio",
+        "country": "Portugal",
+        "goals": 9
+      },
+      {
+        "name": "Helmut Haller",
+        "country": "West Germany",
+        "goals": 6
+      },
+      {
+        "name": "Geoff Hurst",
+        "country": "England",
+        "goals": 4
+      },
+      {
+        "name": "Ferenc Bene",
+        "country": "Hungary",
+        "goals": 4
+      },
+      {
+        "name": "Valeriy Porkujan",
+        "country": "Soviet Union",
+        "goals": 4
+      },
+      {
+        "name": "Franz Beckenbauer",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "Luis Artime",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Bobby Charlton",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "Roger Hunt",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "José Augusto",
+        "country": "Portugal",
+        "goals": 3
+      },
+      {
+        "name": "José Torres",
+        "country": "Portugal",
+        "goals": 3
+      },
+      {
+        "name": "Eduard Malofeyev",
+        "country": "Soviet Union",
+        "goals": 3
+      },
+      {
+        "name": "Rubén Marcos",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Kálmán Mészöly",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Seung-zin Pak",
+        "country": "North Korea",
+        "goals": 2
+      },
+      {
+        "name": "Igor Chislenko",
+        "country": "Soviet Union",
+        "goals": 2
+      },
+      {
+        "name": "Uwe Seeler",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Ermindo Onega",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Garrincha",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Pelé",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Rildo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Tostão",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Georgi Asparuhov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Martin Peters",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Gérard Hausser",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Héctor De Bourgoing",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "János Farkas",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Paolo Barison",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Sandro Mazzola",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Enrique Borja",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Dong-woon Li",
+        "country": "North Korea",
+        "goals": 1
+      },
+      {
+        "name": "Doo-ik Pak",
+        "country": "North Korea",
+        "goals": 1
+      },
+      {
+        "name": "Seung-kook Yang",
+        "country": "North Korea",
+        "goals": 1
+      },
+      {
+        "name": "António Simões",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Anatoliy Banishevskiy",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Amancio",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Josep Maria Fusté",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Manuel Sanchís",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Pirri",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "René-Pierre Quentin",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Julio César Cortés",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Pedro Rocha",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Lothar Emmerich",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Sigfried Held",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Wolfgang Weber",
+        "country": "West Germany",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1970,
+    "updates": [
+      {
+        "name": "Gerd Müller",
+        "country": "West Germany",
+        "goals": 10
+      },
+      {
+        "name": "Jairzinho",
+        "country": "Brazil",
+        "goals": 7
+      },
+      {
+        "name": "Teófilo Cubillas",
+        "country": "Peru",
+        "goals": 5
+      },
+      {
+        "name": "Pelé",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Anatoliy Byshovets",
+        "country": "Soviet Union",
+        "goals": 4
+      },
+      {
+        "name": "Rivellino",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Gigi Riva",
+        "country": "Italy",
+        "goals": 3
+      },
+      {
+        "name": "Uwe Seeler",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Raoul Lambert",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Wilfried Van Moer",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Tostão",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Ladislav Petráš",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Gianni Rivera",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Roberto Boninsegna",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Javier Valdivia",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Alberto Gallardo",
+        "country": "Peru",
+        "goals": 2
+      },
+      {
+        "name": "Florea Dumitrache",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Carlos Alberto",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Clodoaldo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Gérson",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Asparuh Nikodimov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Dinko Dermendzhiev",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Dobromir Zhechev",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Hristo Bonev",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Todor Kolev",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Alan Mullery",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Allan Clarke",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Geoff Hurst",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Martin Peters",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Mordechai Spiegler",
+        "country": "Israel",
+        "goals": 1
+      },
+      {
+        "name": "Angelo Domenghini",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Tarcisio Burgnich",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Gustavo Peña",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Javier Fragoso",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "José Luis González",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Juan Ignacio Basaguren",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Houmane Jarir",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Maouhoub Ghazouani",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Héctor Chumpitaz",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Roberto Challe",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Alexandru Neagu",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Emerich Dembrovschi",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Kakhi Asatiani",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Vitaly Khmelnitsky",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Ove Grahn",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Tom Turesson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ildo Maneiro",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Juan Mujica",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Luis Cubilla",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Víctor Espárrago",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Franz Beckenbauer",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Karl-Heinz Schnellinger",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Reinhard Libuda",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Wolfgang Overath",
+        "country": "West Germany",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1974,
+    "updates": [
+      {
+        "name": "Grzegorz Lato",
+        "country": "Poland",
+        "goals": 7
+      },
+      {
+        "name": "Johan Neeskens",
+        "country": "Netherlands",
+        "goals": 5
+      },
+      {
+        "name": "Andrzej Szarmach",
+        "country": "Poland",
+        "goals": 5
+      },
+      {
+        "name": "Johnny Rep",
+        "country": "Netherlands",
+        "goals": 4
+      },
+      {
+        "name": "Ralf Edström",
+        "country": "Sweden",
+        "goals": 4
+      },
+      {
+        "name": "Gerd Müller",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "René Houseman",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Rivellino",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Johan Cruyff",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Kazimierz Deyna",
+        "country": "Poland",
+        "goals": 3
+      },
+      {
+        "name": "Paul Breitner",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Dušan Bajević",
+        "country": "Yugoslavia",
+        "goals": 3
+      },
+      {
+        "name": "Héctor Yazalde",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Jairzinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Joachim Streich",
+        "country": "East Germany",
+        "goals": 2
+      },
+      {
+        "name": "Emmanuel Sanon",
+        "country": "Haiti",
+        "goals": 2
+      },
+      {
+        "name": "Joe Jordan",
+        "country": "Scotland",
+        "goals": 2
+      },
+      {
+        "name": "Roland Sandberg",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Wolfgang Overath",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Ivica Šurjak",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Stanislav Karasi",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Carlos Babington",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Miguel Ángel Brindisi",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ramón Heredia",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Rubén Ayala",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Valdomiro",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Hristo Bonev",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Sergio Ahumada",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Jürgen Sparwasser",
+        "country": "East Germany",
+        "goals": 1
+      },
+      {
+        "name": "Martin Hoffmann",
+        "country": "East Germany",
+        "goals": 1
+      },
+      {
+        "name": "Fabio Capello",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Gianni Rivera",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Pietro Anastasi",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Romeo Benetti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Rob Rensenbrink",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Ruud Krol",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Theo de Jong",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Jerzy Gorgoń",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Peter Lorimer",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Conny Torstensson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ricardo Pavoni",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Bernhard Cullmann",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Jürgen Grabowski",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Rainer Bonhof",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Uli Hoeneß",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Branko Oblak",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Dragan Džajić",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Ilija Petković",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Josip Katalinski",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Vladislav Bogićević",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1978,
+    "updates": [
+      {
+        "name": "Mario Kempes",
+        "country": "Argentina",
+        "goals": 6
+      },
+      {
+        "name": "Rob Rensenbrink",
+        "country": "Netherlands",
+        "goals": 5
+      },
+      {
+        "name": "Teófilo Cubillas",
+        "country": "Peru",
+        "goals": 5
+      },
+      {
+        "name": "Leopoldo Luque",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Hans Krankl",
+        "country": "Austria",
+        "goals": 4
+      },
+      {
+        "name": "Dirceu",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Roberto Dinamite",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Paolo Rossi",
+        "country": "Italy",
+        "goals": 3
+      },
+      {
+        "name": "Johnny Rep",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Karl-Heinz Rummenigge",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Daniel Bertoni",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Nelinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Roberto Bettega",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Arie Haan",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Ernie Brandts",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Grzegorz Lato",
+        "country": "Poland",
+        "goals": 2
+      },
+      {
+        "name": "Zbigniew Boniek",
+        "country": "Poland",
+        "goals": 2
+      },
+      {
+        "name": "Archie Gemmill",
+        "country": "Scotland",
+        "goals": 2
+      },
+      {
+        "name": "Dieter Müller",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Heinz Flohe",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Alberto Tarantini",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Daniel Passarella",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "René Houseman",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Erich Obermayer",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Walter Schachner",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Reinaldo",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Zico",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Bernard Lacombe",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Christian Lopez",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Dominique Rocheteau",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Marc Berdoll",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Michel Platini",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "András Tóth",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Károly Csapó",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Sándor Zombori",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Hassan Roshan",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Iraj Danaeifard",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Franco Causio",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Renato Zaccarelli",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Romeo Benetti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Arturo Vázquez Ayala",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Víctor Rangel",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Dick Nanninga",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "René van de Kerkhof",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Willy van de Kerkhof",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "César Cueto",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "José Velásquez",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Andrzej Szarmach",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Kazimierz Deyna",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Joe Jordan",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Kenny Dalglish",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Dani",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Juan Manuel Asensi",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Thomas Sjöberg",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ali Kaabi",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Mokhtar Dhouib",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Néjib Ghommidh",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Bernd Hölzenbein",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Hansi Müller",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Rüdiger Abramczik",
+        "country": "West Germany",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1982,
+    "updates": [
+      {
+        "name": "Paolo Rossi",
+        "country": "Italy",
+        "goals": 6
+      },
+      {
+        "name": "Karl-Heinz Rummenigge",
+        "country": "West Germany",
+        "goals": 5
+      },
+      {
+        "name": "Zico",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Zbigniew Boniek",
+        "country": "Poland",
+        "goals": 4
+      },
+      {
+        "name": "Falcão",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Alain Giresse",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "László Kiss",
+        "country": "Hungary",
+        "goals": 3
+      },
+      {
+        "name": "Gerry Armstrong",
+        "country": "Northern Ireland",
+        "goals": 3
+      },
+      {
+        "name": "Salah Assad",
+        "country": "Algeria",
+        "goals": 2
+      },
+      {
+        "name": "Daniel Bertoni",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Daniel Passarella",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Diego Maradona",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Walter Schachner",
+        "country": "Austria",
+        "goals": 2
+      },
+      {
+        "name": "Serginho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Sócrates",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Éder",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Antonín Panenka",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Bryan Robson",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Trevor Francis",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Bernard Genghini",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Didier Six",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Dominique Rocheteau",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Michel Platini",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Gábor Pölöskei",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "László Fazekas",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Tibor Nyilasi",
+        "country": "Hungary",
+        "goals": 2
+      },
+      {
+        "name": "Marco Tardelli",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Billy Hamilton",
+        "country": "Northern Ireland",
+        "goals": 2
+      },
+      {
+        "name": "John Wark",
+        "country": "Scotland",
+        "goals": 2
+      },
+      {
+        "name": "Klaus Fischer",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Pierre Littbarski",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Lakhdar Belloumi",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Rabah Madjer",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Tedj Bensaoula",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Osvaldo Ardiles",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ramón Díaz",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Bruno Pezzey",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Hans Krankl",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Reinhold Hintermaier",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Alexandre Czerniatynski",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Erwin Vandenbergh",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Ludo Coeck",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Júnior",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Oscar",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Grégoire M'Bida",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Gustavo Moscoso",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Juan Carlos Letelier",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Miguel Ángel Neira",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Luis Ramírez Zapata",
+        "country": "El Salvador",
+        "goals": 1
+      },
+      {
+        "name": "Paul Mariner",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Alain Couriol",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Gérard Soler",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Marius Trésor",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Maxime Bossis",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "René Girard",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Antonio Laing",
+        "country": "Honduras",
+        "goals": 1
+      },
+      {
+        "name": "Héctor Zelaya",
+        "country": "Honduras",
+        "goals": 1
+      },
+      {
+        "name": "József Tóth",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "József Varga",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Lázár Szentes",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Alessandro Altobelli",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Antonio Cabrini",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Bruno Conti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Francesco Graziani",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Abdullah Al-Buloushi",
+        "country": "Kuwait",
+        "goals": 1
+      },
+      {
+        "name": "Faisal Al-Dakhil",
+        "country": "Kuwait",
+        "goals": 1
+      },
+      {
+        "name": "Steve Sumner",
+        "country": "New Zealand",
+        "goals": 1
+      },
+      {
+        "name": "Steve Wooddin",
+        "country": "New Zealand",
+        "goals": 1
+      },
+      {
+        "name": "Guillermo La Rosa",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Rubén Toribio Díaz",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Andrzej Buncol",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Andrzej Szarmach",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Grzegorz Lato",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Janusz Kupcewicz",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Stefan Majewski",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Włodzimierz Ciołek",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Włodzimierz Smolarek",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "David Narey",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Graeme Souness",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Joe Jordan",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "John Robertson",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Kenny Dalglish",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Steve Archibald",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandr Chivadze",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Andriy Bal",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Khoren Hovhannisyan",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Oleh Blokhin",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Ramaz Shengelia",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Sergei Baltacha",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Yuri Gavrilov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Enrique Saura",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Jesús María Zamora",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Juanito",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Roberto López Ufarte",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Horst Hrubesch",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Paul Breitner",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Uwe Reinders",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Ivan Gudelj",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Vladimir Petrović",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1986,
+    "updates": [
+      {
+        "name": "Gary Lineker",
+        "country": "England",
+        "goals": 6
+      },
+      {
+        "name": "Diego Maradona",
+        "country": "Argentina",
+        "goals": 5
+      },
+      {
+        "name": "Careca",
+        "country": "Brazil",
+        "goals": 5
+      },
+      {
+        "name": "Emilio Butragueño",
+        "country": "Spain",
+        "goals": 5
+      },
+      {
+        "name": "Jorge Valdano",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Preben Elkjær",
+        "country": "Denmark",
+        "goals": 4
+      },
+      {
+        "name": "Alessandro Altobelli",
+        "country": "Italy",
+        "goals": 4
+      },
+      {
+        "name": "Ihor Belanov",
+        "country": "Soviet Union",
+        "goals": 4
+      },
+      {
+        "name": "Jan Ceulemans",
+        "country": "Belgium",
+        "goals": 3
+      },
+      {
+        "name": "Nico Claesen",
+        "country": "Belgium",
+        "goals": 3
+      },
+      {
+        "name": "Jesper Olsen",
+        "country": "Denmark",
+        "goals": 3
+      },
+      {
+        "name": "Rudi Völler",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Jorge Burruchaga",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Enzo Scifo",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Josimar",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Sócrates",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Jean-Pierre Papin",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Michel Platini",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Yannick Stopyra",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Fernando Quirarte",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Abderrazak Khairi",
+        "country": "Morocco",
+        "goals": 2
+      },
+      {
+        "name": "Julio César Romero",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Roberto Cabañas",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Ramón Calderé",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Klaus Allofs",
+        "country": "West Germany",
+        "goals": 2
+      },
+      {
+        "name": "Djamel Zidane",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "José Luis Brown",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Oscar Ruggeri",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Pedro Pasculli",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Daniel Veyt",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Erwin Vandenbergh",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Franky Vercauteren",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Stéphane Demol",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Edinho",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Nasko Sirakov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Plamen Getov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "John Eriksen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Michael Laudrup",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Søren Lerby",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Peter Beardsley",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Bernard Genghini",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Dominique Rocheteau",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Jean Tigana",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Jean-Marc Ferreri",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Luis Fernández",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Manuel Amoros",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Lajos Détári",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Márton Esterházy",
+        "country": "Hungary",
+        "goals": 1
+      },
+      {
+        "name": "Ahmed Radhi",
+        "country": "Iraq",
+        "goals": 1
+      },
+      {
+        "name": "Hugo Sánchez",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Luis Flores",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Manuel Negrete",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Raúl Servín",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Abdelkrim Merry",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Colin Clarke",
+        "country": "Northern Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Norman Whiteside",
+        "country": "Northern Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Włodzimierz Smolarek",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Carlos Manuel",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Diamantino",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Gordon Strachan",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Chang-sun Park",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Jong-boo Kim",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Jung-moo Huh",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Soon-ho Choi",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ivan Yaremchuk",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Oleh Blokhin",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Oleksandr Zavarov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Pavel Yakovenko",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Sergei Aleinikov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Sergey Rodionov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Vasyl Rats",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Andoni Goikoetxea",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Eloy",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Juan Antonio Señor",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Julio Salinas",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Antonio Alzamendi",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Enzo Francescoli",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Andreas Brehme",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Karl-Heinz Rummenigge",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Lothar Matthäus",
+        "country": "West Germany",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1990,
+    "updates": [
+      {
+        "name": "Salvatore Schillaci",
+        "country": "Italy",
+        "goals": 6
+      },
+      {
+        "name": "Tomáš Skuhravý",
+        "country": "Czechoslovakia",
+        "goals": 5
+      },
+      {
+        "name": "Roger Milla",
+        "country": "Cameroon",
+        "goals": 4
+      },
+      {
+        "name": "Gary Lineker",
+        "country": "England",
+        "goals": 4
+      },
+      {
+        "name": "Míchel",
+        "country": "Spain",
+        "goals": 4
+      },
+      {
+        "name": "Lothar Matthäus",
+        "country": "West Germany",
+        "goals": 4
+      },
+      {
+        "name": "David Platt",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "Andreas Brehme",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Jürgen Klinsmann",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Rudi Völler",
+        "country": "West Germany",
+        "goals": 3
+      },
+      {
+        "name": "Claudio Caniggia",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Careca",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Müller",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Bernardo Redín",
+        "country": "Colombia",
+        "goals": 2
+      },
+      {
+        "name": "Michal Bílek",
+        "country": "Czechoslovakia",
+        "goals": 2
+      },
+      {
+        "name": "Roberto Baggio",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Gabi Balint",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Marius Lăcătuș",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Darko Pančev",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Davor Jozić",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Dragan Stojković",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Jorge Burruchaga",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Pedro Monzón",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Pedro Troglio",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Andreas Ogris",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Gerhard Rodax",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Enzo Scifo",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Jan Ceulemans",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Leo Clijsters",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Marc Degryse",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Michel De Wolf",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Patrick Vervoort",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Emmanuel Kundé",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Eugène Ekéké",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "François Omam-Biyik",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Carlos Valderrama",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Freddy Rincón",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Hernán Medford",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Juan Cayasso",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Róger Flores",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Rónald González Brenes",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Ivan Hašek",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Luboš Kubík",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Milan Luhový",
+        "country": "Czechoslovakia",
+        "goals": 1
+      },
+      {
+        "name": "Magdi Abdelghani",
+        "country": "Egypt",
+        "goals": 1
+      },
+      {
+        "name": "Mark Wright",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Aldo Serena",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Giuseppe Giannini",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Ronald Koeman",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Ruud Gullit",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Wim Kieft",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Kevin Sheedy",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Niall Quinn",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Mo Johnston",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Stuart McCall",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Kwan Hwangbo",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Andrei Zygmantovich",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Igor Dobrovolski",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Oleh Protasov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Oleksandr Zavarov",
+        "country": "Soviet Union",
+        "goals": 1
+      },
+      {
+        "name": "Alberto Górriz",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Julio Salinas",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Glenn Strömberg",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Johnny Ekström",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Tomas Brolin",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ali Thani Jumaa",
+        "country": "United Arab Emirates",
+        "goals": 1
+      },
+      {
+        "name": "Khalid Ismaïl",
+        "country": "United Arab Emirates",
+        "goals": 1
+      },
+      {
+        "name": "Bruce Murray",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Paul Caligiuri",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Daniel Fonseca",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Pablo Bengoechea",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Pierre Littbarski",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Uwe Bein",
+        "country": "West Germany",
+        "goals": 1
+      },
+      {
+        "name": "Robert Prosinečki",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Safet Sušić",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1994,
+    "updates": [
+      {
+        "name": "Hristo Stoichkov",
+        "country": "Bulgaria",
+        "goals": 6
+      },
+      {
+        "name": "Oleg Salenko",
+        "country": "Russia",
+        "goals": 6
+      },
+      {
+        "name": "Romário",
+        "country": "Brazil",
+        "goals": 5
+      },
+      {
+        "name": "Jürgen Klinsmann",
+        "country": "Germany",
+        "goals": 5
+      },
+      {
+        "name": "Roberto Baggio",
+        "country": "Italy",
+        "goals": 5
+      },
+      {
+        "name": "Kennet Andersson",
+        "country": "Sweden",
+        "goals": 5
+      },
+      {
+        "name": "Gabriel Batistuta",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Florin Răducioiu",
+        "country": "Romania",
+        "goals": 4
+      },
+      {
+        "name": "Martin Dahlin",
+        "country": "Sweden",
+        "goals": 4
+      },
+      {
+        "name": "Bebeto",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Dennis Bergkamp",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Gheorghe Hagi",
+        "country": "Romania",
+        "goals": 3
+      },
+      {
+        "name": "José Luis Caminero",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Tomas Brolin",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "Claudio Caniggia",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Philippe Albert",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Yordan Letchkov",
+        "country": "Bulgaria",
+        "goals": 2
+      },
+      {
+        "name": "Adolfo Valencia",
+        "country": "Colombia",
+        "goals": 2
+      },
+      {
+        "name": "Rudi Völler",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Dino Baggio",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Luis García Postigo",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Wim Jonk",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Daniel Amokachi",
+        "country": "Nigeria",
+        "goals": 2
+      },
+      {
+        "name": "Emmanuel Amunike",
+        "country": "Nigeria",
+        "goals": 2
+      },
+      {
+        "name": "Ilie Dumitrescu",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Fuad Anwar",
+        "country": "Saudi Arabia",
+        "goals": 2
+      },
+      {
+        "name": "Myung-bo Hong",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Andoni Goikoetxea",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Adrian Knup",
+        "country": "Switzerland",
+        "goals": 2
+      },
+      {
+        "name": "Abel Balbo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Diego Maradona",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Georges Grün",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Marc Degryse",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Erwin Sánchez",
+        "country": "Bolivia",
+        "goals": 1
+      },
+      {
+        "name": "Branco",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Márcio Santos",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Raí",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Daniel Borimirov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Nasko Sirakov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "David Embé",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "François Omam-Biyik",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Roger Milla",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Hermán Gaviria",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "John Harold Lozano",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Karl-Heinz Riedle",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Lothar Matthäus",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Daniele Massaro",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Alberto García Aspe",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Marcelino Bernal",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Hassan Nader",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Mohammed Chaouch",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Aron Winter",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Bryan Roy",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Gaston Taument",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Finidi George",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Rashidi Yekini",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Samson Siasia",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Kjetil Rekdal",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "John Aldridge",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Ray Houghton",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Dan Petrescu",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Dmitri Radchenko",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Fahad Al-Ghesheyan",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Saeed Al-Owairan",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Sami Al-Jaber",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Jung-won Seo",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Sun-hong Hwang",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Fernando Hierro",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Josep Guardiola",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Julio Salinas",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Luis Enrique",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Txiki Begiristain",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Henrik Larsson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Håkan Mild",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Roger Ljung",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Alain Sutter",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Georges Bregy",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Stéphane Chapuisat",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Earnie Stewart",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Eric Wynalda",
+        "country": "United States",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 1998,
+    "updates": [
+      {
+        "name": "Davor Šuker",
+        "country": "Croatia",
+        "goals": 6
+      },
+      {
+        "name": "Gabriel Batistuta",
+        "country": "Argentina",
+        "goals": 5
+      },
+      {
+        "name": "Christian Vieri",
+        "country": "Italy",
+        "goals": 5
+      },
+      {
+        "name": "Ronaldo",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Marcelo Salas",
+        "country": "Chile",
+        "goals": 4
+      },
+      {
+        "name": "Luis Hernández",
+        "country": "Mexico",
+        "goals": 4
+      },
+      {
+        "name": "Bebeto",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "César Sampaio",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Rivaldo",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Thierry Henry",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "Jürgen Klinsmann",
+        "country": "Germany",
+        "goals": 3
+      },
+      {
+        "name": "Oliver Bierhoff",
+        "country": "Germany",
+        "goals": 3
+      },
+      {
+        "name": "Dennis Bergkamp",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Ariel Ortega",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Marc Wilmots",
+        "country": "Belgium",
+        "goals": 2
+      },
+      {
+        "name": "Robert Prosinečki",
+        "country": "Croatia",
+        "goals": 2
+      },
+      {
+        "name": "Brian Laudrup",
+        "country": "Denmark",
+        "goals": 2
+      },
+      {
+        "name": "Alan Shearer",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Michael Owen",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Emmanuel Petit",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Lilian Thuram",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Zinedine Zidane",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Roberto Baggio",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Theodore Whitmore",
+        "country": "Jamaica",
+        "goals": 2
+      },
+      {
+        "name": "Ricardo Peláez",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Abdeljalil Hadda",
+        "country": "Morocco",
+        "goals": 2
+      },
+      {
+        "name": "Salaheddine Bassir",
+        "country": "Morocco",
+        "goals": 2
+      },
+      {
+        "name": "Patrick Kluivert",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Phillip Cocu",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Ronald de Boer",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Viorel Moldovan",
+        "country": "Romania",
+        "goals": 2
+      },
+      {
+        "name": "Shaun Bartlett",
+        "country": "South Africa",
+        "goals": 2
+      },
+      {
+        "name": "Fernando Hierro",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Fernando Morientes",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Slobodan Komljenović",
+        "country": "Yugoslavia",
+        "goals": 2
+      },
+      {
+        "name": "Claudio López",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Javier Zanetti",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Mauricio Pineda",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Andi Herzog",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Ivica Vastić",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Toni Polster",
+        "country": "Austria",
+        "goals": 1
+      },
+      {
+        "name": "Luc Nilis",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Emil Kostadinov",
+        "country": "Bulgaria",
+        "goals": 1
+      },
+      {
+        "name": "Patrick M'Boma",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Pierre Njanka",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "José Luis Sierra",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Léider Preciado",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Goran Vlaović",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Mario Stanić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Robert Jarni",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Allan Nielsen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Ebbe Sand",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Marc Rieper",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Martin Jørgensen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Michael Laudrup",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Peter Møller",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Thomas Helveg",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Darren Anderton",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "David Beckham",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Paul Scholes",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Bixente Lizarazu",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Christophe Dugarry",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "David Trezeguet",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Laurent Blanc",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Youri Djorkaeff",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Andreas Möller",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Hamid Estili",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Mehdi Mahdavikia",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Luigi Di Biagio",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Robbie Earle",
+        "country": "Jamaica",
+        "goals": 1
+      },
+      {
+        "name": "Masashi Nakayama",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Alberto García Aspe",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Cuauhtémoc Blanco",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Mustapha Hadji",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Boudewijn Zenden",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Edgar Davids",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Marc Overmars",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Pierre van Hooijdonk",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Mutiu Adepoju",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Sunday Oliseh",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Tijani Babangida",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Victor Ikpeba",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Wilson Oruma",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Dan Eggen",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "Håvard Flo",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "Kjetil Rekdal",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "Tore André Flo",
+        "country": "Norway",
+        "goals": 1
+      },
+      {
+        "name": "Celso Ayala",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "José Cardozo",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Miguel Ángel Benítez",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Adrian Ilie",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Dan Petrescu",
+        "country": "Romania",
+        "goals": 1
+      },
+      {
+        "name": "Sami Al-Jaber",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Yousuf Al-Thunayan",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Craig Burley",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "John Collins",
+        "country": "Scotland",
+        "goals": 1
+      },
+      {
+        "name": "Benni McCarthy",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Sang-chul Yoo",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Seok-ju Ha",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Kiko",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Luis Enrique",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Raúl",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Skander Souayah",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Brian McBride",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Dragan Stojković",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Predrag Mijatović",
+        "country": "Yugoslavia",
+        "goals": 1
+      },
+      {
+        "name": "Siniša Mihajlović",
+        "country": "Yugoslavia",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2002,
+    "updates": [
+      {
+        "name": "Ronaldo",
+        "country": "Brazil",
+        "goals": 8
+      },
+      {
+        "name": "Rivaldo",
+        "country": "Brazil",
+        "goals": 5
+      },
+      {
+        "name": "Miroslav Klose",
+        "country": "Germany",
+        "goals": 5
+      },
+      {
+        "name": "Jon Dahl Tomasson",
+        "country": "Denmark",
+        "goals": 4
+      },
+      {
+        "name": "Christian Vieri",
+        "country": "Italy",
+        "goals": 4
+      },
+      {
+        "name": "Marc Wilmots",
+        "country": "Belgium",
+        "goals": 3
+      },
+      {
+        "name": "Michael Ballack",
+        "country": "Germany",
+        "goals": 3
+      },
+      {
+        "name": "Pauleta",
+        "country": "Portugal",
+        "goals": 3
+      },
+      {
+        "name": "Robbie Keane",
+        "country": "Republic of Ireland",
+        "goals": 3
+      },
+      {
+        "name": "Papa Bouba Diop",
+        "country": "Senegal",
+        "goals": 3
+      },
+      {
+        "name": "Fernando Morientes",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Raúl",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Henrik Larsson",
+        "country": "Sweden",
+        "goals": 3
+      },
+      {
+        "name": "İlhan Mansız",
+        "country": "Turkey",
+        "goals": 3
+      },
+      {
+        "name": "Ronaldinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Rónald Gómez",
+        "country": "Costa Rica",
+        "goals": 2
+      },
+      {
+        "name": "Michael Owen",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Junichi Inamoto",
+        "country": "Japan",
+        "goals": 2
+      },
+      {
+        "name": "Jared Borgetti",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Nelson Cuevas",
+        "country": "Paraguay",
+        "goals": 2
+      },
+      {
+        "name": "Henri Camara",
+        "country": "Senegal",
+        "goals": 2
+      },
+      {
+        "name": "Jung-hwan Ahn",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Fernando Hierro",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Hasan Şaş",
+        "country": "Turkey",
+        "goals": 2
+      },
+      {
+        "name": "Ümit Davala",
+        "country": "Turkey",
+        "goals": 2
+      },
+      {
+        "name": "Brian McBride",
+        "country": "United States",
+        "goals": 2
+      },
+      {
+        "name": "Landon Donovan",
+        "country": "United States",
+        "goals": 2
+      },
+      {
+        "name": "Gabriel Batistuta",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Hernán Crespo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Johan Walem",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Peter Van der Heyden",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Wesley Sonck",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Edmílson",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Júnior",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Roberto Carlos",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Patrick M'Boma",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Samuel Eto'o",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Mauricio Wright",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Paulo Wanchope",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Winston Parks",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Ivica Olić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Milan Rapaić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Dennis Rommedahl",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Agustín Delgado",
+        "country": "Ecuador",
+        "goals": 1
+      },
+      {
+        "name": "Édison Méndez",
+        "country": "Ecuador",
+        "goals": 1
+      },
+      {
+        "name": "David Beckham",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Emile Heskey",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Rio Ferdinand",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Sol Campbell",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Bernd Schneider",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Carsten Jancker",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Marco Bode",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Oliver Bierhoff",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Oliver Neuville",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Thomas Linke",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Alessandro Del Piero",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Hidetoshi Nakata",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Hiroaki Morishima",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Takayuki Suzuki",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Cuauhtémoc Blanco",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Gerardo Torrado",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Julius Aghahowa",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Francisco Arce",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Jorge Luis Campos",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Roque Santa Cruz",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Emmanuel Olisadebe",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Marcin Żewłakow",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Paweł Kryszałowicz",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Beto",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Rui Costa",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Damien Duff",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Gary Breen",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Matt Holland",
+        "country": "Republic of Ireland",
+        "goals": 1
+      },
+      {
+        "name": "Dmitri Sychev",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Valeri Karpin",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Vladimir Beschastnykh",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Yegor Titov",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Khalilou Fadiga",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Salif Diao",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Milenko Ačimovič",
+        "country": "Slovenia",
+        "goals": 1
+      },
+      {
+        "name": "Sebastjan Cimirotič",
+        "country": "Slovenia",
+        "goals": 1
+      },
+      {
+        "name": "Benni McCarthy",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Lucas Radebe",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Quinton Fortune",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Siyabonga Nomvethe",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Teboho Mokoena",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Chong-gug Song",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Eul-yong Lee",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ji-sung Park",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ki-hyeon Seol",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Sang-chul Yoo",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Sun-hong Hwang",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Gaizka Mendieta",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Juan Carlos Valerón",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Anders Svensson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Niclas Alexandersson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Raouf Bouzaiene",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Bülent Korkmaz",
+        "country": "Turkey",
+        "goals": 1
+      },
+      {
+        "name": "Emre Belözoğlu",
+        "country": "Turkey",
+        "goals": 1
+      },
+      {
+        "name": "Hakan Şükür",
+        "country": "Turkey",
+        "goals": 1
+      },
+      {
+        "name": "Clint Mathis",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "John O'Brien",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Darío Rodríguez",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Diego Forlán",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Richard Morales",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Álvaro Recoba",
+        "country": "Uruguay",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2006,
+    "updates": [
+      {
+        "name": "Miroslav Klose",
+        "country": "Germany",
+        "goals": 5
+      },
+      {
+        "name": "Hernán Crespo",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Maxi Rodríguez",
+        "country": "Argentina",
+        "goals": 3
+      },
+      {
+        "name": "Ronaldo",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Thierry Henry",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "Zinedine Zidane",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "Lukas Podolski",
+        "country": "Germany",
+        "goals": 3
+      },
+      {
+        "name": "David Villa",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Fernando Torres",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Tim Cahill",
+        "country": "Australia",
+        "goals": 2
+      },
+      {
+        "name": "Adriano",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Paulo Wanchope",
+        "country": "Costa Rica",
+        "goals": 2
+      },
+      {
+        "name": "Tomáš Rosický",
+        "country": "Czech Republic",
+        "goals": 2
+      },
+      {
+        "name": "Agustín Delgado",
+        "country": "Ecuador",
+        "goals": 2
+      },
+      {
+        "name": "Carlos Tenorio",
+        "country": "Ecuador",
+        "goals": 2
+      },
+      {
+        "name": "Steven Gerrard",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Patrick Vieira",
+        "country": "France",
+        "goals": 2
+      },
+      {
+        "name": "Bastian Schweinsteiger",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Luca Toni",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Marco Materazzi",
+        "country": "Italy",
+        "goals": 2
+      },
+      {
+        "name": "Aruna Dindane",
+        "country": "Ivory Coast",
+        "goals": 2
+      },
+      {
+        "name": "Omar Bravo",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Bartosz Bosacki",
+        "country": "Poland",
+        "goals": 2
+      },
+      {
+        "name": "Maniche",
+        "country": "Portugal",
+        "goals": 2
+      },
+      {
+        "name": "Alexander Frei",
+        "country": "Switzerland",
+        "goals": 2
+      },
+      {
+        "name": "Andriy Shevchenko",
+        "country": "Ukraine",
+        "goals": 2
+      },
+      {
+        "name": "Flávio",
+        "country": "Angola",
+        "goals": 1
+      },
+      {
+        "name": "Carlos Tevez",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Esteban Cambiasso",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Javier Saviola",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Lionel Messi",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Roberto Ayala",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Craig Moore",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Harry Kewell",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "John Aloisi",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Fred",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Gilberto",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Juninho Pernambucano",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Kaká",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Zé Roberto",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Rónald Gómez",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Darijo Srna",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Niko Kovač",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Jan Koller",
+        "country": "Czech Republic",
+        "goals": 1
+      },
+      {
+        "name": "Iván Kaviedes",
+        "country": "Ecuador",
+        "goals": 1
+      },
+      {
+        "name": "David Beckham",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Joe Cole",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Peter Crouch",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Franck Ribéry",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Oliver Neuville",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Philipp Lahm",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Torsten Frings",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Asamoah Gyan",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Haminu Draman",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Stephen Appiah",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Sulley Muntari",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Sohrab Bakhtiarizadeh",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Yahya Golmohammadi",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Alberto Gilardino",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Alessandro Del Piero",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Andrea Pirlo",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Fabio Grosso",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Filippo Inzaghi",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Francesco Totti",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Gianluca Zambrotta",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Vincenzo Iaquinta",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Bakari Koné",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Bonaventure Kalou",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Didier Drogba",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Keiji Tamada",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Shunsuke Nakamura",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Francisco Fonseca",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Rafael Márquez",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Sinha",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Arjen Robben",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Robin van Persie",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Ruud van Nistelrooy",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Nelson Cuevas",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Deco",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Nuno Gomes",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Pauleta",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Simão",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Sami Al-Jaber",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Yasser Al-Qahtani",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Nikola Žigić",
+        "country": "Serbia and Montenegro",
+        "goals": 1
+      },
+      {
+        "name": "Saša Ilić",
+        "country": "Serbia and Montenegro",
+        "goals": 1
+      },
+      {
+        "name": "Chun-soo Lee",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ji-sung Park",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Jung-hwan Ahn",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Juanito",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Raúl",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Xabi Alonso",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Freddie Ljungberg",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Henrik Larsson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Marcus Allbäck",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Philippe Senderos",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Tranquillo Barnetta",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Mohamed Kader",
+        "country": "Togo",
+        "goals": 1
+      },
+      {
+        "name": "Jawhar Mnari",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Radhi Jaïdi",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Ziad Jaziri",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Andriy Rusol",
+        "country": "Ukraine",
+        "goals": 1
+      },
+      {
+        "name": "Maksym Kalynychenko",
+        "country": "Ukraine",
+        "goals": 1
+      },
+      {
+        "name": "Serhii Rebrov",
+        "country": "Ukraine",
+        "goals": 1
+      },
+      {
+        "name": "Clint Dempsey",
+        "country": "United States",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2010,
+    "updates": [
+      {
+        "name": "Thomas Müller",
+        "country": "Germany",
+        "goals": 5
+      },
+      {
+        "name": "Wesley Sneijder",
+        "country": "Netherlands",
+        "goals": 5
+      },
+      {
+        "name": "David Villa",
+        "country": "Spain",
+        "goals": 5
+      },
+      {
+        "name": "Diego Forlán",
+        "country": "Uruguay",
+        "goals": 5
+      },
+      {
+        "name": "Gonzalo Higuaín",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Miroslav Klose",
+        "country": "Germany",
+        "goals": 4
+      },
+      {
+        "name": "Róbert Vittek",
+        "country": "Slovakia",
+        "goals": 4
+      },
+      {
+        "name": "Luís Fabiano",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Asamoah Gyan",
+        "country": "Ghana",
+        "goals": 3
+      },
+      {
+        "name": "Landon Donovan",
+        "country": "United States",
+        "goals": 3
+      },
+      {
+        "name": "Luis Suárez",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Carlos Tevez",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Brett Holman",
+        "country": "Australia",
+        "goals": 2
+      },
+      {
+        "name": "Elano",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Robinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Samuel Eto'o",
+        "country": "Cameroon",
+        "goals": 2
+      },
+      {
+        "name": "Lukas Podolski",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Keisuke Honda",
+        "country": "Japan",
+        "goals": 2
+      },
+      {
+        "name": "Javier Hernández",
+        "country": "Mexico",
+        "goals": 2
+      },
+      {
+        "name": "Arjen Robben",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Kalu Uche",
+        "country": "Nigeria",
+        "goals": 2
+      },
+      {
+        "name": "Tiago",
+        "country": "Portugal",
+        "goals": 2
+      },
+      {
+        "name": "Chung-yong Lee",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Jung-soo Lee",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Andrés Iniesta",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Gabriel Heinze",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Martín Demichelis",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Martín Palermo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Tim Cahill",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Juan",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Maicon",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Jean Beausejour",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Mark González",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Rodrigo Millar",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Dennis Rommedahl",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Jon Dahl Tomasson",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Nicklas Bendtner",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Jermain Defoe",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Matthew Upson",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Steven Gerrard",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Florent Malouda",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Arne Friedrich",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Cacau",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Marcell Jansen",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Mesut Özil",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Sami Khedira",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Kevin-Prince Boateng",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Sulley Muntari",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Dimitris Salpingidis",
+        "country": "Greece",
+        "goals": 1
+      },
+      {
+        "name": "Vasilis Torosidis",
+        "country": "Greece",
+        "goals": 1
+      },
+      {
+        "name": "Antonio Di Natale",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Daniele De Rossi",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Fabio Quagliarella",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Vincenzo Iaquinta",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Didier Drogba",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Romaric",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Salomon Kalou",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Yaya Touré",
+        "country": "Ivory Coast",
+        "goals": 1
+      },
+      {
+        "name": "Shinji Okazaki",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Yasuhito Endō",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Cuauhtémoc Blanco",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Rafael Márquez",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Dirk Kuyt",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Giovanni van Bronckhorst",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Klaas-Jan Huntelaar",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Robin van Persie",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Shane Smeltz",
+        "country": "New Zealand",
+        "goals": 1
+      },
+      {
+        "name": "Winston Reid",
+        "country": "New Zealand",
+        "goals": 1
+      },
+      {
+        "name": "Yakubu",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Yun-nam Ji",
+        "country": "North Korea",
+        "goals": 1
+      },
+      {
+        "name": "Antolín Alcaraz",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Cristian Riveros",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Enrique Vera",
+        "country": "Paraguay",
+        "goals": 1
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Hugo Almeida",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Liédson",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Raul Meireles",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Simão",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Marko Pantelić",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Milan Jovanović",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Kamil Kopúnek",
+        "country": "Slovakia",
+        "goals": 1
+      },
+      {
+        "name": "Robert Koren",
+        "country": "Slovenia",
+        "goals": 1
+      },
+      {
+        "name": "Valter Birsa",
+        "country": "Slovenia",
+        "goals": 1
+      },
+      {
+        "name": "Zlatan Ljubijankić",
+        "country": "Slovenia",
+        "goals": 1
+      },
+      {
+        "name": "Bongani Khumalo",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Katlego Mphela",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Siphiwe Tshabalala",
+        "country": "South Africa",
+        "goals": 1
+      },
+      {
+        "name": "Chu-young Park",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ji-sung Park",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Carles Puyol",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Gélson Fernandes",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Clint Dempsey",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Michael Bradley",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Edinson Cavani",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Maxi Pereira",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Álvaro Pereira",
+        "country": "Uruguay",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2014,
+    "updates": [
+      {
+        "name": "James Rodríguez",
+        "country": "Colombia",
+        "goals": 6
+      },
+      {
+        "name": "Thomas Müller",
+        "country": "Germany",
+        "goals": 5
+      },
+      {
+        "name": "Lionel Messi",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Neymar",
+        "country": "Brazil",
+        "goals": 4
+      },
+      {
+        "name": "Robin van Persie",
+        "country": "Netherlands",
+        "goals": 4
+      },
+      {
+        "name": "Enner Valencia",
+        "country": "Ecuador",
+        "goals": 3
+      },
+      {
+        "name": "Karim Benzema",
+        "country": "France",
+        "goals": 3
+      },
+      {
+        "name": "André Schürrle",
+        "country": "Germany",
+        "goals": 3
+      },
+      {
+        "name": "Arjen Robben",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Xherdan Shaqiri",
+        "country": "Switzerland",
+        "goals": 3
+      },
+      {
+        "name": "Abdelmoumene Djabou",
+        "country": "Algeria",
+        "goals": 2
+      },
+      {
+        "name": "Islam Slimani",
+        "country": "Algeria",
+        "goals": 2
+      },
+      {
+        "name": "Tim Cahill",
+        "country": "Australia",
+        "goals": 2
+      },
+      {
+        "name": "David Luiz",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Oscar",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Alexis Sánchez",
+        "country": "Chile",
+        "goals": 2
+      },
+      {
+        "name": "Jackson Martínez",
+        "country": "Colombia",
+        "goals": 2
+      },
+      {
+        "name": "Bryan Ruiz",
+        "country": "Costa Rica",
+        "goals": 2
+      },
+      {
+        "name": "Ivan Perišić",
+        "country": "Croatia",
+        "goals": 2
+      },
+      {
+        "name": "Mario Mandžukić",
+        "country": "Croatia",
+        "goals": 2
+      },
+      {
+        "name": "Mario Götze",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Mats Hummels",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Miroslav Klose",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Toni Kroos",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "André Ayew",
+        "country": "Ghana",
+        "goals": 2
+      },
+      {
+        "name": "Asamoah Gyan",
+        "country": "Ghana",
+        "goals": 2
+      },
+      {
+        "name": "Gervinho",
+        "country": "Ivory Coast",
+        "goals": 2
+      },
+      {
+        "name": "Wilfried Bony",
+        "country": "Ivory Coast",
+        "goals": 2
+      },
+      {
+        "name": "Memphis Depay",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Ahmed Musa",
+        "country": "Nigeria",
+        "goals": 2
+      },
+      {
+        "name": "Clint Dempsey",
+        "country": "United States",
+        "goals": 2
+      },
+      {
+        "name": "Luis Suárez",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Rafik Halliche",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Sofiane Feghouli",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Yacine Brahimi",
+        "country": "Algeria",
+        "goals": 1
+      },
+      {
+        "name": "Gonzalo Higuaín",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Marcos Rojo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ángel Di María",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Mile Jedinak",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Divock Origi",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Dries Mertens",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Jan Vertonghen",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Kevin De Bruyne",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Marouane Fellaini",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Romelu Lukaku",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Avdija Vršajević",
+        "country": "Bosnia and Herzegovina",
+        "goals": 1
+      },
+      {
+        "name": "Edin Džeko",
+        "country": "Bosnia and Herzegovina",
+        "goals": 1
+      },
+      {
+        "name": "Miralem Pjanić",
+        "country": "Bosnia and Herzegovina",
+        "goals": 1
+      },
+      {
+        "name": "Vedad Ibišević",
+        "country": "Bosnia and Herzegovina",
+        "goals": 1
+      },
+      {
+        "name": "Fernandinho",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Fred",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Thiago Silva",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Joël Matip",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Charles Aránguiz",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Eduardo Vargas",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Jean Beausejour",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Jorge Valdivia",
+        "country": "Chile",
+        "goals": 1
+      },
+      {
+        "name": "Juan Cuadrado",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Juan Fernando Quintero",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Pablo Armero",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Teófilo Gutiérrez",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Joel Campbell",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Marco Ureña",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Óscar Duarte",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Ivica Olić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Daniel Sturridge",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Wayne Rooney",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Blaise Matuidi",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Mathieu Valbuena",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Moussa Sissoko",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Olivier Giroud",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Paul Pogba",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Mesut Özil",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Sami Khedira",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Andreas Samaris",
+        "country": "Greece",
+        "goals": 1
+      },
+      {
+        "name": "Georgios Samaras",
+        "country": "Greece",
+        "goals": 1
+      },
+      {
+        "name": "Sokratis Papastathopoulos",
+        "country": "Greece",
+        "goals": 1
+      },
+      {
+        "name": "Carlo Costly",
+        "country": "Honduras",
+        "goals": 1
+      },
+      {
+        "name": "Reza Ghoochannejhad",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Claudio Marchisio",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Mario Balotelli",
+        "country": "Italy",
+        "goals": 1
+      },
+      {
+        "name": "Keisuke Honda",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Shinji Okazaki",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Andrés Guardado",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Giovani dos Santos",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Javier Hernández",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Oribe Peralta",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Rafael Márquez",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Daley Blind",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Georginio Wijnaldum",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Klaas-Jan Huntelaar",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Leroy Fer",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Stefan de Vrij",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Wesley Sneijder",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Peter Odemwingie",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Nani",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Silvestre Varela",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandr Kerzhakov",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandr Kokorin",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Heung-min Son",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Ja-cheol Koo",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Keun-ho Lee",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "David Villa",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Fernando Torres",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Juan Mata",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Xabi Alonso",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Admir Mehmedi",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Blerim Džemaili",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Granit Xhaka",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Haris Seferovic",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Jermaine Jones",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "John Brooks",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Julian Green",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Diego Godín",
+        "country": "Uruguay",
+        "goals": 1
+      },
+      {
+        "name": "Edinson Cavani",
+        "country": "Uruguay",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2018,
+    "updates": [
+      {
+        "name": "Harry Kane",
+        "country": "England",
+        "goals": 6
+      },
+      {
+        "name": "Romelu Lukaku",
+        "country": "Belgium",
+        "goals": 4
+      },
+      {
+        "name": "Antoine Griezmann",
+        "country": "France",
+        "goals": 4
+      },
+      {
+        "name": "Kylian Mbappé",
+        "country": "France",
+        "goals": 4
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 4
+      },
+      {
+        "name": "Denis Cheryshev",
+        "country": "Russia",
+        "goals": 4
+      },
+      {
+        "name": "Eden Hazard",
+        "country": "Belgium",
+        "goals": 3
+      },
+      {
+        "name": "Yerry Mina",
+        "country": "Colombia",
+        "goals": 3
+      },
+      {
+        "name": "Ivan Perišić",
+        "country": "Croatia",
+        "goals": 3
+      },
+      {
+        "name": "Mario Mandžukić",
+        "country": "Croatia",
+        "goals": 3
+      },
+      {
+        "name": "Artem Dzyuba",
+        "country": "Russia",
+        "goals": 3
+      },
+      {
+        "name": "Diego Costa",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Edinson Cavani",
+        "country": "Uruguay",
+        "goals": 3
+      },
+      {
+        "name": "Sergio Agüero",
+        "country": "Argentina",
+        "goals": 2
+      },
+      {
+        "name": "Mile Jedinak",
+        "country": "Australia",
+        "goals": 2
+      },
+      {
+        "name": "Neymar",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Philippe Coutinho",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Luka Modrić",
+        "country": "Croatia",
+        "goals": 2
+      },
+      {
+        "name": "Mohamed Salah",
+        "country": "Egypt",
+        "goals": 2
+      },
+      {
+        "name": "John Stones",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Takashi Inui",
+        "country": "Japan",
+        "goals": 2
+      },
+      {
+        "name": "Ahmed Musa",
+        "country": "Nigeria",
+        "goals": 2
+      },
+      {
+        "name": "Heung-min Son",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Andreas Granqvist",
+        "country": "Sweden",
+        "goals": 2
+      },
+      {
+        "name": "Wahbi Khazri",
+        "country": "Tunisia",
+        "goals": 2
+      },
+      {
+        "name": "Luis Suárez",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Gabriel Mercado",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Lionel Messi",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Marcos Rojo",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ángel Di María",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Adnan Januzaj",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Dries Mertens",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Jan Vertonghen",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Kevin De Bruyne",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Marouane Fellaini",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Michy Batshuayi",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Nacer Chadli",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Thomas Meunier",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Paulinho",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Renato Augusto",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Roberto Firmino",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Thiago Silva",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Juan Cuadrado",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Juan Fernando Quintero",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Radamel Falcao",
+        "country": "Colombia",
+        "goals": 1
+      },
+      {
+        "name": "Kendall Waston",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Andrej Kramarić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Ante Rebić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Domagoj Vida",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Ivan Rakitić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Milan Badelj",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Christian Eriksen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Mathias Jørgensen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Yussuf Poulsen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Dele Alli",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Harry Maguire",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jesse Lingard",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Kieran Trippier",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Benjamin Pavard",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Paul Pogba",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Raphaël Varane",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Samuel Umtiti",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Marco Reus",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Toni Kroos",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "Alfreð Finnbogason",
+        "country": "Iceland",
+        "goals": 1
+      },
+      {
+        "name": "Gylfi Sigurðsson",
+        "country": "Iceland",
+        "goals": 1
+      },
+      {
+        "name": "Karim Ansarifard",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Genki Haraguchi",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Keisuke Honda",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Shinji Kagawa",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Yuya Osako",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Carlos Vela",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Hirving Lozano",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Javier Hernández",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Khalid Boutaïb",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Youssef En-Nesyri",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Victor Moses",
+        "country": "Nigeria",
+        "goals": 1
+      },
+      {
+        "name": "Felipe Baloy",
+        "country": "Panama",
+        "goals": 1
+      },
+      {
+        "name": "André Carrillo",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Paolo Guerrero",
+        "country": "Peru",
+        "goals": 1
+      },
+      {
+        "name": "Grzegorz Krychowiak",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Jan Bednarek",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Pepe",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Ricardo Quaresma",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandr Golovin",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Mário Fernandes",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Yury Gazinsky",
+        "country": "Russia",
+        "goals": 1
+      },
+      {
+        "name": "Salem Al-Dawsari",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Salman Al-Faraj",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "M'Baye Niang",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Moussa Wagué",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Sadio Mané",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandar Kolarov",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Aleksandar Mitrović",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Young-gwon Kim",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Iago Aspas",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Isco",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Nacho",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Emil Forsberg",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ludwig Augustinsson",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Ola Toivonen",
+        "country": "Sweden",
+        "goals": 1
+      },
+      {
+        "name": "Blerim Džemaili",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Granit Xhaka",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Josip Drmić",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Steven Zuber",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Xherdan Shaqiri",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Dylan Bronn",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Fakhreddine Ben Youssef",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Ferjani Sassi",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "José Giménez",
+        "country": "Uruguay",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2022,
+    "updates": [
+      {
+        "name": "Kylian Mbappé",
+        "country": "France",
+        "goals": 8
+      },
+      {
+        "name": "Lionel Messi",
+        "country": "Argentina",
+        "goals": 7
+      },
+      {
+        "name": "Julián Álvarez",
+        "country": "Argentina",
+        "goals": 4
+      },
+      {
+        "name": "Olivier Giroud",
+        "country": "France",
+        "goals": 4
+      },
+      {
+        "name": "Richarlison",
+        "country": "Brazil",
+        "goals": 3
+      },
+      {
+        "name": "Enner Valencia",
+        "country": "Ecuador",
+        "goals": 3
+      },
+      {
+        "name": "Bukayo Saka",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "Marcus Rashford",
+        "country": "England",
+        "goals": 3
+      },
+      {
+        "name": "Cody Gakpo",
+        "country": "Netherlands",
+        "goals": 3
+      },
+      {
+        "name": "Gonçalo Ramos",
+        "country": "Portugal",
+        "goals": 3
+      },
+      {
+        "name": "Álvaro Morata",
+        "country": "Spain",
+        "goals": 3
+      },
+      {
+        "name": "Neymar",
+        "country": "Brazil",
+        "goals": 2
+      },
+      {
+        "name": "Vincent Aboubakar",
+        "country": "Cameroon",
+        "goals": 2
+      },
+      {
+        "name": "Andrej Kramarić",
+        "country": "Croatia",
+        "goals": 2
+      },
+      {
+        "name": "Harry Kane",
+        "country": "England",
+        "goals": 2
+      },
+      {
+        "name": "Kai Havertz",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Niclas Füllkrug",
+        "country": "Germany",
+        "goals": 2
+      },
+      {
+        "name": "Mohammed Kudus",
+        "country": "Ghana",
+        "goals": 2
+      },
+      {
+        "name": "Mehdi Taremi",
+        "country": "Iran",
+        "goals": 2
+      },
+      {
+        "name": "Ritsu Dōan",
+        "country": "Japan",
+        "goals": 2
+      },
+      {
+        "name": "Youssef En-Nesyri",
+        "country": "Morocco",
+        "goals": 2
+      },
+      {
+        "name": "Wout Weghorst",
+        "country": "Netherlands",
+        "goals": 2
+      },
+      {
+        "name": "Robert Lewandowski",
+        "country": "Poland",
+        "goals": 2
+      },
+      {
+        "name": "Bruno Fernandes",
+        "country": "Portugal",
+        "goals": 2
+      },
+      {
+        "name": "Rafael Leão",
+        "country": "Portugal",
+        "goals": 2
+      },
+      {
+        "name": "Salem Al-Dawsari",
+        "country": "Saudi Arabia",
+        "goals": 2
+      },
+      {
+        "name": "Aleksandar Mitrović",
+        "country": "Serbia",
+        "goals": 2
+      },
+      {
+        "name": "Cho Gue-sung",
+        "country": "South Korea",
+        "goals": 2
+      },
+      {
+        "name": "Ferran Torres",
+        "country": "Spain",
+        "goals": 2
+      },
+      {
+        "name": "Breel Embolo",
+        "country": "Switzerland",
+        "goals": 2
+      },
+      {
+        "name": "Giorgian De Arrascaeta",
+        "country": "Uruguay",
+        "goals": 2
+      },
+      {
+        "name": "Alexis Mac Allister",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Enzo Fernández",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Nahuel Molina",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Ángel Di María",
+        "country": "Argentina",
+        "goals": 1
+      },
+      {
+        "name": "Craig Goodwin",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Mathew Leckie",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Mitchell Duke",
+        "country": "Australia",
+        "goals": 1
+      },
+      {
+        "name": "Michy Batshuayi",
+        "country": "Belgium",
+        "goals": 1
+      },
+      {
+        "name": "Casemiro",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Lucas Paquetá",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Vinícius Júnior",
+        "country": "Brazil",
+        "goals": 1
+      },
+      {
+        "name": "Eric Maxim Choupo-Moting",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Jean-Charles Castelletto",
+        "country": "Cameroon",
+        "goals": 1
+      },
+      {
+        "name": "Alphonso Davies",
+        "country": "Canada",
+        "goals": 1
+      },
+      {
+        "name": "Juan Pablo Vargas",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Keysher Fuller",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Yeltsin Tejeda",
+        "country": "Costa Rica",
+        "goals": 1
+      },
+      {
+        "name": "Bruno Petković",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Ivan Perišić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Joško Gvardiol",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Lovro Majer",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Marko Livaja",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Mislav Oršić",
+        "country": "Croatia",
+        "goals": 1
+      },
+      {
+        "name": "Andreas Christensen",
+        "country": "Denmark",
+        "goals": 1
+      },
+      {
+        "name": "Moisés Caicedo",
+        "country": "Ecuador",
+        "goals": 1
+      },
+      {
+        "name": "Jack Grealish",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jordan Henderson",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Jude Bellingham",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Phil Foden",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Raheem Sterling",
+        "country": "England",
+        "goals": 1
+      },
+      {
+        "name": "Adrien Rabiot",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Aurélien Tchouaméni",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Randal Kolo Muani",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Théo Hernandez",
+        "country": "France",
+        "goals": 1
+      },
+      {
+        "name": "Serge Gnabry",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "İlkay Gündoğan",
+        "country": "Germany",
+        "goals": 1
+      },
+      {
+        "name": "André Ayew",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Mohammed Salisu",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Osman Bukari",
+        "country": "Ghana",
+        "goals": 1
+      },
+      {
+        "name": "Ramin Rezaeian",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Rouzbeh Cheshmi",
+        "country": "Iran",
+        "goals": 1
+      },
+      {
+        "name": "Ao Tanaka",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Daizen Maeda",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Takuma Asano",
+        "country": "Japan",
+        "goals": 1
+      },
+      {
+        "name": "Henry Martín",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Luis Chávez",
+        "country": "Mexico",
+        "goals": 1
+      },
+      {
+        "name": "Achraf Dari",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Hakim Ziyech",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Romain Saïss",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Zakaria Aboukhlal",
+        "country": "Morocco",
+        "goals": 1
+      },
+      {
+        "name": "Daley Blind",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Davy Klaassen",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Denzel Dumfries",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Frenkie de Jong",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Memphis Depay",
+        "country": "Netherlands",
+        "goals": 1
+      },
+      {
+        "name": "Piotr Zieliński",
+        "country": "Poland",
+        "goals": 1
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "João Félix",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Pepe",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Raphaël Guerreiro",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Ricardo Horta",
+        "country": "Portugal",
+        "goals": 1
+      },
+      {
+        "name": "Mohammed Muntari",
+        "country": "Qatar",
+        "goals": 1
+      },
+      {
+        "name": "Saleh Al-Shehri",
+        "country": "Saudi Arabia",
+        "goals": 1
+      },
+      {
+        "name": "Bamba Dieng",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Boulaye Dia",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Famara Diédhiou",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Ismaïla Sarr",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Kalidou Koulibaly",
+        "country": "Senegal",
+        "goals": 1
+      },
+      {
+        "name": "Dušan Vlahović",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Sergej Milinković-Savić",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Strahinja Pavlović",
+        "country": "Serbia",
+        "goals": 1
+      },
+      {
+        "name": "Hee-chan Hwang",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Paik Seung-ho",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Young-gwon Kim",
+        "country": "South Korea",
+        "goals": 1
+      },
+      {
+        "name": "Carlos Soler",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Dani Olmo",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Gavi",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Marco Asensio",
+        "country": "Spain",
+        "goals": 1
+      },
+      {
+        "name": "Manuel Akanji",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Remo Freuler",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Xherdan Shaqiri",
+        "country": "Switzerland",
+        "goals": 1
+      },
+      {
+        "name": "Wahbi Khazri",
+        "country": "Tunisia",
+        "goals": 1
+      },
+      {
+        "name": "Christian Pulisic",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Haji Wright",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Timothy Weah",
+        "country": "United States",
+        "goals": 1
+      },
+      {
+        "name": "Gareth Bale",
+        "country": "Wales",
+        "goals": 1
+      }
+    ]
+  },
+  {
+    "year": 2026,
+    "updates": [
+      {
+        "name": "Lionel Messi",
+        "country": "Argentina",
+        "goals": 6
+      },
+      {
+        "name": "Kylian Mbappé",
+        "country": "França",
+        "goals": 6
+      },
+      {
+        "name": "Harry Kane",
+        "country": "Inglaterra",
+        "goals": 5
+      },
+      {
+        "name": "Cristiano Ronaldo",
+        "country": "Portugal",
+        "goals": 2
+      },
+      {
+        "name": "Vinícius Júnior",
+        "country": "Brasil",
+        "goals": 4
+      },
+      {
+        "name": "Erling Haaland",
+        "country": "Noruega",
+        "goals": 5
+      }
+    ]
+  }
+];
+
+    const years = editions.map(d => d.year);
+    const slider = document.getElementById('yearSlider');
+    const rows = document.getElementById('rows');
+    const yearTitle = document.getElementById('yearTitle');
+    const yearLabel = document.getElementById('yearLabel');
+    const playBtn = document.getElementById('playBtn');
+    
+    slider.max = years.length - 1;
+    
+    const worldCupWinners = {"1930": [{"n": "Uruguai", "f": "uy"}, {"n": "Argentina", "f": "ar"}, {"n": "EUA", "f": "us"}], "1934": [{"n": "Itália", "f": "it"}, {"n": "Tchecoslováquia", "f": "cz"}, {"n": "Alemanha", "f": "de"}], "1938": [{"n": "Itália", "f": "it"}, {"n": "Hungria", "f": "hu"}, {"n": "Brasil", "f": "br"}], "1950": [{"n": "Uruguai", "f": "uy"}, {"n": "Brasil", "f": "br"}, {"n": "Suécia", "f": "se"}], "1954": [{"n": "Alemanha Oc.", "f": "de"}, {"n": "Hungria", "f": "hu"}, {"n": "Áustria", "f": "at"}], "1958": [{"n": "Brasil", "f": "br"}, {"n": "Suécia", "f": "se"}, {"n": "França", "f": "fr"}], "1962": [{"n": "Brasil", "f": "br"}, {"n": "Tchecoslováquia", "f": "cz"}, {"n": "Chile", "f": "cl"}], "1966": [{"n": "Inglaterra", "f": "gb-eng"}, {"n": "Alemanha Oc.", "f": "de"}, {"n": "Portugal", "f": "pt"}], "1970": [{"n": "Brasil", "f": "br"}, {"n": "Itália", "f": "it"}, {"n": "Alemanha Oc.", "f": "de"}], "1974": [{"n": "Alemanha Oc.", "f": "de"}, {"n": "Holanda", "f": "nl"}, {"n": "Polônia", "f": "pl"}], "1978": [{"n": "Argentina", "f": "ar"}, {"n": "Holanda", "f": "nl"}, {"n": "Brasil", "f": "br"}], "1982": [{"n": "Itália", "f": "it"}, {"n": "Alemanha Oc.", "f": "de"}, {"n": "Polônia", "f": "pl"}], "1986": [{"n": "Argentina", "f": "ar"}, {"n": "Alemanha Oc.", "f": "de"}, {"n": "França", "f": "fr"}], "1990": [{"n": "Alemanha", "f": "de"}, {"n": "Argentina", "f": "ar"}, {"n": "Itália", "f": "it"}], "1994": [{"n": "Brasil", "f": "br"}, {"n": "Itália", "f": "it"}, {"n": "Suécia", "f": "se"}], "1998": [{"n": "França", "f": "fr"}, {"n": "Brasil", "f": "br"}, {"n": "Croácia", "f": "hr"}], "2002": [{"n": "Brasil", "f": "br"}, {"n": "Alemanha", "f": "de"}, {"n": "Turquia", "f": "tr"}], "2006": [{"n": "Itália", "f": "it"}, {"n": "França", "f": "fr"}, {"n": "Alemanha", "f": "de"}], "2010": [{"n": "Espanha", "f": "es"}, {"n": "Holanda", "f": "nl"}, {"n": "Alemanha", "f": "de"}], "2014": [{"n": "Alemanha", "f": "de"}, {"n": "Argentina", "f": "ar"}, {"n": "Holanda", "f": "nl"}], "2018": [{"n": "França", "f": "fr"}, {"n": "Croácia", "f": "hr"}, {"n": "Bélgica", "f": "be"}], "2022": [{"n": "Argentina", "f": "ar"}, {"n": "França", "f": "fr"}, {"n": "Croácia", "f": "hr"}], "2026": [{"n": "Brasil", "f": "br"}, {"n": "França", "f": "fr"}, {"n": "Argentina", "f": "ar"}]};
+    const hostFlagMap = {'Uruguai': 'uy', 'Itália': 'it', 'França': 'fr', 'Brasil': 'br', 'Suíça': 'ch', 'Suécia': 'se', 'Chile': 'cl', 'Inglaterra': 'gb-eng', 'México': 'mx', 'Alemanha Ocidental': 'de', 'Argentina': 'ar', 'Espanha': 'es', 'Estados Unidos': 'us', 'Coreia do Sul/Japão': 'jp', 'Alemanha': 'de', 'África do Sul': 'za', 'Rússia': 'ru', 'Catar': 'qa', 'Canadá, EUA e México': 'us'};
+    const activePlayers = ['Lionel Messi', 'Kylian Mbappé', 'Harry Kane', 'Cristiano Ronaldo', 'Vinícius Júnior', 'Erling Haaland', 'Matheus Cunha', 'Deniz Undav', 'Jonathan David', 'Folarin Balogun', 'Crysencio Summerville', 'Neymar'];
+    let currentIdx = 0;
+    let timer = null;
+    let isPlaying = false;
+
+    function cumulativeUntil(year){
+      const totals = new Map();
+      for(const ed of editions){
+        if(ed.year > year) break;
+        for(const u of ed.updates){
+          const prev = totals.get(u.name) || { name:u.name, country:u.country, goals:0, games:0 };
+          totals.set(u.name, { name:u.name, country:u.country, goals:prev.goals + u.goals, games:prev.games + u.games });
+        }
+      }
+      return [...totals.values()]
+        .sort((a,b)=>b.goals-a.goals || a.games-b.games || a.name.localeCompare(b.name))
+        .slice(0,20);
+    }
+
+    function render(i){
+      currentIdx = i;
+      slider.value = i;
+      const year = years[i];
+      const current = cumulativeUntil(year);
+      const previous = i > 0 ? cumulativeUntil(years[i-1]) : [];
+      const prevPos = new Map(previous.map((p, idx) => [p.name, idx+1]));
+      const oldBoxes = new Map([...rows.querySelectorAll('.row')].map(el => [el.dataset.name, el.getBoundingClientRect()]));
+      
+      
+      
+      const hostName = hostMap[year] || 'Sede';
+      const hostFlag = hostFlagMap[hostName] || 'un';
+      
+      const winners = worldCupWinners[year] || [];
+      const podiumHtml = `
+        <div class="podium">
+          ${winners.map((w, idx) => `
+            <div class="podium-item">
+              <span class="medal">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</span>
+              <img src="https://flagcdn.com/w40/${w.f}.png" class="podium-flag" alt="${w.n}">
+              <span class="podium-initials">${w.n.substring(0, 3)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      yearTitle.innerHTML = `
+        <div style="display:flex; align-items:center; flex-wrap:wrap; justify-content:center;">
+          <span>${year} - Copa do Mundo (${hostName})</span>
+          <img src="https://flagcdn.com/w80/${hostFlag}.png" style="height:40px; margin-left:15px; border-radius:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15)">
+          ${podiumHtml}
+        </div>
+      `;
+
+
+      yearLabel.textContent = year;
+
+      rows.innerHTML = current.map((p, idx) => {
+        const old = prevPos.get(p.name);
+        let change = '—', cls = 'same', motionClass = '';
+        if(old === undefined){ change = '✨'; cls = 'new'; }
+        else if(old > idx + 1){ change = `▲ ${old - (idx + 1)}`; cls = 'up'; motionClass = 'moving-up'; }
+        else if(old < idx + 1){ change = `▼ ${(idx + 1) - old}`; cls = 'down'; motionClass = 'moving-down'; }
+        return `
+          <div class="row ${motionClass}" data-name="${p.name}">
+            <div class="pos">${idx + 1}</div>
+            <div class="name" style="${activePlayers.includes(p.name) ? 'font-weight:900' : 'font-weight:400'}">${p.name}</div>
+            <div class="country">${flagImg(p.country)} ${p.country}</div>
+            <div class="games">${p.goals}</div>
+            <div class="games">${p.games || ''}</div>
+            <div class="${cls}">${change}</div>
+          </div>
+        `;
+      }).join('');
+
+      const nextEls = [...rows.querySelectorAll('.row')];
+      nextEls.forEach(el => {
+        const oldBox = oldBoxes.get(el.dataset.name);
+        if(!oldBox){
+          el.animate([{ opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'translateY(0)' }], { duration:420, easing:'ease-out' });
+          return;
+        }
+        const newBox = el.getBoundingClientRect();
+        const dx = oldBox.left - newBox.left;
+        const dy = oldBox.top - newBox.top;
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        el.style.transition = 'none';
+      });
+      requestAnimationFrame(() => {
+        nextEls.forEach(el => {
+          el.style.transition = 'transform 620ms cubic-bezier(.2,.9,.2,1), opacity 620ms ease';
+          el.style.transform = 'translate(0,0)';
+        });
+      });
+    }
+
+    function togglePlay(){
+      if(isPlaying){
+        clearInterval(timer);
+        isPlaying = false;
+        playBtn.textContent = '▶ Play';
+      } else {
+        if(currentIdx >= years.length - 1) currentIdx = -1;
+        isPlaying = true;
+        playBtn.textContent = 'Pause';
+        timer = setInterval(() => {
+          if(currentIdx < years.length - 1){
+            render(currentIdx + 1);
+          } else {
+            togglePlay();
+          }
+        }, 2000);
+      }
+    }
+
+    slider.addEventListener('input', e => {
+      if(isPlaying) togglePlay();
+      render(parseInt(e.target.value, 10));
+    });
+
+    playBtn.addEventListener('click', togglePlay);
+
+    render(0);
+
+   </script>
+</body>
+</html>
